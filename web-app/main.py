@@ -19,7 +19,9 @@ app = FastAPI(debug=True)
 
 class User(BaseModel):
     name: str
+    class_var: str
     password: str
+
 
 users: List[User] = []
 
@@ -28,7 +30,7 @@ def send_data(user :User):
     users.append(user)
     return "user registered"
 
-@app.get("/")
+@app.get("/data")
 def get_data():
     return users
 
