@@ -2,29 +2,28 @@ import requests as req
 import os 
 from dotenv import load_dotenv
 
-from schemas import User
+from schemas import MachineResponse, User
 from typing import List
+
+from utils.data_handler import transform_reponse
 
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
 
-url = "http://localhost:8000/data"
+url = "http://localhost:8000/data"  
 headers = {
     "api-key":WEB_API_KEY,
     "Content-Type": "application/json"  
 }
 
 #TODO: adicionar tratamento de dados
-def send_user(name,class_var,password):
-    
+def post_user(new_user:User):
+    machine_response = transform_reponse(new_user)
     # TODO: separar essa transformação de objeto para controller
     # TODO: adicionar verificação de usuario
-    new_user = User(name=name,class_var=class_var,password=password)
-    
-    response = req.post(url=url,headers=headers,json=new_user.model_dump(),verify=False)
-    #print(response.status,response.text)
+    response = req.post(url=url,headers=headers,json=machine_response.model_dump(),verify=False)
 
-def get_data() -> List[User]:
+def get_users() -> List[User]:
     response = req.get(url=url)
     users_data = response.json()
     return [User(**user) for user in users_data]

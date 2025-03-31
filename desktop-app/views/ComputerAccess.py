@@ -5,7 +5,8 @@ import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
 
-from api import send_user
+from api import post_user
+from utils.data_handler import verify_user
 
 class ComputerAccess:
     def __init__(self):
@@ -25,6 +26,7 @@ class ComputerAccess:
         self.root = ctk.CTk()
         self.root.title("Login")
         self.root.resizable(False, False)
+        self.root.attributes('-topmost', True)  
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         default_font = ("Arial", 12)
@@ -49,7 +51,7 @@ class ComputerAccess:
         # entrada do nome
         password_label = ctk.CTkLabel(self.root, text="Password:")
         password_label.place(x=20, y=140)
-        self.password_entry = ctk.CTkEntry(self.root, placeholder_text="Senha", width=200)
+        self.password_entry = ctk.CTkEntry(self.root,show="*", placeholder_text="Senha", width=200)
         self.password_entry.place(x=100, y=140)
     
         # botao de confirmacao
@@ -69,12 +71,13 @@ class ComputerAccess:
         if name == "admin" and class_name == "Selecione sua turma" and password == "admin":
             self.root.withdraw()
             #self.root.destroy()
-            #views.AccessDataTemplate.AccessDataTemplate(self.COMPUTER_NAME).render()
+            #views.AccessDataTemplate.AccessDataTemplate(self.COMPUTER_NAME).render()   
         elif name and password and class_name != "Selecione sua turma":
-            send_user(name, class_name, password)
+            new_user = verify_user(name, class_name, password)
+            post_user(new_user)
             sys.exit()
             self.root.destroy()
-        elif self.registered:
+        else:
             messagebox.showwarning("Atenção", "Por favor adicione todas suas informações.")
 
     def verify_close(self):  # TODO: this method may present problems in the future

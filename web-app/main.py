@@ -7,6 +7,8 @@ from typing import List
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+from schemas import User,MachineResponse
+
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
 
@@ -17,22 +19,16 @@ def verify_key(api_key:str = Header(...)):
 
 app = FastAPI(debug=True)
 
-class User(BaseModel):
-    name: str
-    class_var: str
-    password: str
-
-
-users: List[User] = []
+sessions: List[MachineResponse] = []
 
 @app.post("/data", dependencies=[Depends(verify_key)])
-def send_data(user :User):
-    users.append(user)
+def send_data(machine_response: MachineResponse):
+    sessions.append(machine_response)
     return "user registered"
 
 @app.get("/data")
 def get_data():
-    return users
+    return sessions
 
 
 if __name__ == "__main__":
