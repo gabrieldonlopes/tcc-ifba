@@ -23,7 +23,7 @@ def post_user(new_user:User):
     # TODO: adicionar verificação de usuario
     response = req.post(url=url,headers=headers,json=machine_response.model_dump(),verify=False)
 
-def get_users() -> List[User]:
+def get_all_sessions() -> List[MachineResponse]:
     response = req.get(url=url)
-    users_data = response.json()
-    return [User(**user) for user in users_data]
+    sessions_data = response.json()
+    return [MachineResponse(**session) for session in sessions_data]

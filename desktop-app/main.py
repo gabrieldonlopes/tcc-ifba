@@ -1,8 +1,8 @@
 import argparse
-from  views.ComputerAccess import ComputerAccess
+from  views.ComputerAccessTemplate import ComputerAccessTemplate
 
 
-app = ComputerAccess()
+app = ComputerAccessTemplate()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -14,4 +14,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.run_app:
-        app.render()
+        app.run()
