@@ -2,6 +2,8 @@ import customtkinter as ctk
 from tkinter import ttk
 from typing import List
 
+#from ..utils.convert_csv import machine_responses_to_csv
+
 class SessionViewTemplate:
     def __init__(self, machine_name: str, machine_responses: List[dict], parent_window):
         self.machine_responses = machine_responses
@@ -27,14 +29,14 @@ class SessionViewTemplate:
         table_frame = ctk.CTkFrame(self.root)
         table_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
-        columns = ("session_start", "name", "class_var", "password", "cpu_usage", "ram_usage", "cpu_temp")
+        columns = ("session_start", "name", "class_var", "cpf", "cpu_usage", "ram_usage", "cpu_temp")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=10)
 
         headers = {
             "session_start": "Início da Sessão",
             "name": "Nome",
             "class_var": "Turma",
-            "password": "Senha",
+            "cpf": "CPF",
             "cpu_usage": "Uso CPU (%)",
             "ram_usage": "Uso RAM (%)",
             "cpu_temp": "Temp. CPU (°C)"
@@ -42,7 +44,7 @@ class SessionViewTemplate:
 
         for col, text in headers.items():
             self.tree.heading(col, text=text)
-            self.tree.column(col, width=120, anchor='center')
+            self.tree.column(col, width=120, anchor='center') 
 
         for response in self.machine_responses:
             values = (
@@ -61,7 +63,16 @@ class SessionViewTemplate:
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscroll=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
+        
+        button_frame = ctk.CTkFrame(self.root)
+        button_frame.pack(pady=20)
+        #btn_export_csv = ctk.CTkButton(button_frame, text="Exportar para CSV", command=machine_responses_to_csv(self.machine_responses,f"{self.COMPUTER_NAME}_sessions.csv"))
+        #btn_export_csv.pack(side="left", padx=20)
+        
+        btn_configure = ctk.CTkButton(button_frame, text="Configurar Dados da Máquina", command=self.configure_machine)
+        btn_configure.pack(side="left", padx=20)
 
+        
         self._configure_style()
 
     def _configure_style(self):
@@ -87,8 +98,8 @@ class SessionViewTemplate:
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
+
     def close(self):
-        """Fecha a janela de forma controlada"""
         if self.parent_window:
             self.parent_window._on_session_view_closed()
         self.root.destroy()

@@ -5,7 +5,7 @@ from utils.data_handler import verify_user
 from views.SessionViewTemplate import SessionViewTemplate
 
 class ComputerAccessTemplate:
-    def __init__(self):
+    def __init__(self): #TODO: adicionar recebimento de dados do sistema
         self.COMPUTER_NAME = "ifba01"
         self.CLASS_LIST = ["1ano", "2ano", "3ano"]
         self.root = ctk.CTk()
@@ -50,9 +50,9 @@ class ComputerAccessTemplate:
         class_menu.grid(row=1, column=1, padx=5, pady=5)
     
         # Entrada da senha
-        ctk.CTkLabel(input_frame, text="Senha:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.password_entry = ctk.CTkEntry(input_frame, show="*", placeholder_text="Senha", width=200)
-        self.password_entry.grid(row=2, column=1, padx=5, pady=5)
+        ctk.CTkLabel(input_frame, text="CPF:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.cpf_entry = ctk.CTkEntry(input_frame,placeholder_text="CPF", width=200)
+        self.cpf_entry.grid(row=2, column=1, padx=5, pady=5)
     
         # Botão de confirmação
         enter_button = ctk.CTkButton(self.root, text="Entrar", command=self._handle_login, width=120)
@@ -61,10 +61,10 @@ class ComputerAccessTemplate:
     def _handle_login(self):
         name = self.name_entry.get().strip()
         class_name = self.class_var.get()
-        password = self.password_entry.get()
+        cpf = self.cpf_entry.get()
 
         # Modo admin
-        if name == "admin" and password == "admin" and class_name == "Selecione sua turma":
+        if name == "admin" and cpf == "admin" and class_name == "Selecione sua turma":
             self.allow_close = True  # Permite fechar a janela
             try:
                 data = get_all_sessions()
@@ -75,12 +75,12 @@ class ComputerAccessTemplate:
             return
 
         # Validação normal
-        if not name or not password or class_name == "Selecione sua turma":
+        if not name or not cpf or class_name == "Selecione sua turma":
             messagebox.showwarning("Atenção", "Por favor adicione todas suas informações.")
             return
 
         try:
-            new_user = verify_user(name, class_name, password)
+            new_user = verify_user(name, class_name, cpf)
             post_user(new_user)
             self.allow_close = True
             self._safe_close()
