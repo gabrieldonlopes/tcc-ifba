@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Table
 from sqlalchemy.orm import Mapped, mapped_column,relationship, DeclarativeBase, validates
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
@@ -20,6 +20,13 @@ class Classes(str, Enum): # modificar para receber turmas na hora da configuraç
     SEGUNDOANO =  "2º"
     TERCEIROANO = "3º"
     QUARTOANO = "4º"
+
+user_lab_association = Table( # tabela utilizada para integração n..n
+    "user_lab_association",
+    Base.metadata,
+    mapped_column("user_id", ForeignKey("User.user_id"), primary_key=True),
+    mapped_column("lab_id", ForeignKey("Lab.lab_id"), primary_key=True)
+)
 
 class Machine(Base):
     __tablename__ = "Machine"
@@ -60,6 +67,10 @@ class Lab(Base):
 
     lab_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
+    users: Mapped[list["User"]] = relationship(
+        secondary=user_lab_association,
+        back_populates="labs"
+    )
     machines: Mapped[list["Machine"]] = relationship("Machine", back_populates="lab")
 
 class Session(Base):
@@ -83,10 +94,18 @@ class Session(Base):
             except ValueError as e:
                 raise ValueError("Invalid date") from e
         return value
- 
 
 class User(Base):
     __tablename__ = "User"
 
-    pass
+    user_id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))  
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    
+    labs: Mapped[list["Lab"]] = relationship(
+        secondary=user_lab_association,
+        back_populates="users"
+    )
+    
 
