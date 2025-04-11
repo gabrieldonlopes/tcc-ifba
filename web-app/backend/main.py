@@ -39,15 +39,6 @@ def verify_key(api_key:str = Header(...)):
         raise HTTPException(status_code=401, detail="Chave de API inválida")
 
 
-@app.post("/data", dependencies=[Depends(verify_key)])
-def send_data(machine_response: MachineResponse):
-    sessions.append(machine_response)
-    return "user registered"
-
-@app.get("/data")
-def get_data():
-    return sessions
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
