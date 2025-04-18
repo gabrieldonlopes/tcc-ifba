@@ -21,7 +21,7 @@ class Classes(str, Enum): # modificar para receber turmas na hora da configuraç
     TERCEIROANO = "3º"
     QUARTOANO = "4º"
 
-user_lab_association = Table( # tabela utilizada para integração n..n
+user_lab_association = Table(
     "user_lab_association",
     Base.metadata,
     Column("user_id", ForeignKey("User.user_id"), primary_key=True),
@@ -33,24 +33,15 @@ class Machine(Base):
     
     machine_key: Mapped[str] = mapped_column(String(64), primary_key=True)
     motherboard: Mapped[str] = mapped_column(String(100))
-    storage: Mapped[int] = mapped_column(Integer)
-    memory: Mapped[int] = mapped_column(Integer)
+    memory: Mapped[str] = mapped_column(String(100))
+    storage: Mapped[str] = mapped_column(String(100))
     state_cleanliness: Mapped[StateCleanliness] = mapped_column(SqlEnum(StateCleanliness))
     last_checked: Mapped[datetime] = mapped_column(DateTime)
 
-    lab_id: Mapped[int] = mapped_column(ForeignKey("Lab.lab_id"))
+    lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))  # Alterado para String
     lab: Mapped["Lab"] = relationship("Lab", back_populates="machines")
     
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="machine")
-
-    @validates("last_checked") # transforma o dado recebido em str para datetime
-    def validate_last_checked(self, key, value):
-        if isinstance(value, str):
-            try:
-                return datetime.strptime(value, "%H:%M:%S %d/%m/%Y")
-            except ValueError as e:
-                raise ValueError("Invalid date") from e
-        return value
     
 class Student(Base):
     __tablename__ = "Student"
@@ -65,7 +56,7 @@ class Student(Base):
 class Lab(Base):
     __tablename__ = "Lab"
 
-    lab_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lab_id: Mapped[str] = mapped_column(String(10), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     users: Mapped[list["User"]] = relationship(
         secondary=user_lab_association,
