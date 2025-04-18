@@ -5,67 +5,105 @@ from utils.data_handler import verify_user
 from views.SessionViewTemplate import SessionViewTemplate
 
 class ComputerAccessTemplate:
-    def __init__(self): #TODO: adicionar recebimento de dados do sistema
+    def __init__(self):
         self.COMPUTER_NAME = "ifba01"
         self.CLASS_LIST = ["1ano", "2ano", "3ano"]
-        self.root = ctk.CTk()
+        self.allow_close = False
         self.session_view = None
-        self.allow_close = False  # Controle para permitir fechamento
-        self._setup_main_window()
 
-    def _setup_main_window(self):
+        self.root = ctk.CTk()
+        self._init_window()
+
+    def _init_window(self):
         self.root.title("Login")
         self.root.resizable(False, False)
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
-        # Configurações para impedir minimização e gerenciar fechamento
         self.root.attributes('-topmost', True)
-        self.root.protocol("WM_DELETE_WINDOW", self._verify_close)
-        self.root.bind("<Unmap>", self._prevent_minimize)  # Evento de minimização
-        
-        # Configuração da interface
-        self._setup_ui()
-        self._center_root()
+        self.root.protocol("WM_DELETE_WINDOW", self._handle_window_close)
+        self.root.bind("<Unmap>", self._prevent_minimize)
 
-    def _setup_ui(self):
-        title_label = ctk.CTkLabel(self.root, text=f"Acesso ao Computador {self.COMPUTER_NAME}", 
-                                 font=("Arial", 16))
-        title_label.pack(pady=20)
+        self._build_ui()
+        self._center_window(400, 350)  # Aumentei um pouco o tamanho para melhor visualização
 
-        # Frame para os campos de entrada
-        input_frame = ctk.CTkFrame(self.root)
-        input_frame.pack(pady=10, padx=20, fill="x")
+    def _build_ui(self):
+        # Frame principal
+        main_frame = ctk.CTkFrame(self.root)
+        main_frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-        # Entrada do nome
-        ctk.CTkLabel(input_frame, text="Nome:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        self.name_entry = ctk.CTkEntry(input_frame, placeholder_text="Nome", width=200)
-        self.name_entry.grid(row=0, column=1, padx=5, pady=5)
-        
-        # Entrada de turma
-        ctk.CTkLabel(input_frame, text="Turma:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        # Título
+        title = ctk.CTkLabel(
+            main_frame, 
+            text=f"Acesso ao Computador {self.COMPUTER_NAME}", 
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        title.pack(pady=(10, 20))
+
+        # Frame dos campos de entrada
+        input_frame = ctk.CTkFrame(main_frame)
+        input_frame.pack(pady=10, padx=10, fill="x")
+
+        # Nome
+        ctk.CTkLabel(input_frame, text="Nome:", font=ctk.CTkFont(weight="bold")).grid(
+            row=0, column=0, padx=5, pady=(10, 5), sticky="w")
+        self.name_entry = ctk.CTkEntry(
+            input_frame, 
+            placeholder_text="Digite seu nome completo",
+            width=250,
+            height=35,
+            font=ctk.CTkFont(size=14)
+        )
+        self.name_entry.grid(row=0, column=1, padx=5, pady=(10, 5))
+
+        # Turma
+        ctk.CTkLabel(input_frame, text="Turma:", font=ctk.CTkFont(weight="bold")).grid(
+            row=1, column=0, padx=5, pady=5, sticky="w")
         self.class_var = ctk.StringVar(value="Selecione sua turma")
-        class_menu = ctk.CTkOptionMenu(input_frame, values=self.CLASS_LIST, 
-                                     variable=self.class_var, width=200)
+        class_menu = ctk.CTkOptionMenu(
+            input_frame, 
+            values=self.CLASS_LIST, 
+            variable=self.class_var, 
+            width=250,
+            height=35,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=14)
+        )
         class_menu.grid(row=1, column=1, padx=5, pady=5)
-    
-        # Entrada da senha
-        ctk.CTkLabel(input_frame, text="CPF:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
-        self.cpf_entry = ctk.CTkEntry(input_frame,placeholder_text="CPF", width=200)
-        self.cpf_entry.grid(row=2, column=1, padx=5, pady=5)
-    
-        # Botão de confirmação
-        enter_button = ctk.CTkButton(self.root, text="Entrar", command=self._handle_login, width=120)
-        enter_button.pack(pady=20)
+
+        # Senha (substituindo o CPF)
+        ctk.CTkLabel(input_frame, text="Senha:", font=ctk.CTkFont(weight="bold")).grid(
+            row=2, column=0, padx=5, pady=(5, 10), sticky="w")
+        self.password_entry = ctk.CTkEntry(
+            input_frame, 
+            placeholder_text="Digite sua senha",
+            width=250,
+            height=35,
+            font=ctk.CTkFont(size=14),
+            show="*"  # Mostrar asteriscos para a senha
+        )
+        self.password_entry.grid(row=2, column=1, padx=5, pady=(5, 10))
+
+        # Botão de login
+        login_btn = ctk.CTkButton(
+            main_frame,
+            text="Entrar",
+            command=self._handle_login,
+            width=150,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            corner_radius=8
+        )
+        login_btn.pack(pady=(20, 10))
 
     def _handle_login(self):
         name = self.name_entry.get().strip()
         class_name = self.class_var.get()
-        cpf = self.cpf_entry.get()
+        password = self.password_entry.get()
 
-        # Modo admin
-        if name == "admin" and cpf == "admin" and class_name == "Selecione sua turma":
-            self.allow_close = True  # Permite fechar a janela
+        # Login de administrador
+        if name == "admin" and password == "admin" and class_name == "Selecione sua turma":
+            self.allow_close = True
             try:
                 data = get_all_sessions()
                 self._open_session_view(data)
@@ -74,50 +112,45 @@ class ComputerAccessTemplate:
                 self.allow_close = False
             return
 
-        # Validação normal
-        if not name or not cpf or class_name == "Selecione sua turma":
-            messagebox.showwarning("Atenção", "Por favor adicione todas suas informações.")
+        # Validação dos campos
+        if not name or not password or class_name == "Selecione sua turma":
+            messagebox.showwarning("Atenção", "Por favor, preencha todos os campos.")
             return
 
         try:
-            new_user = verify_user(name, class_name, cpf)
-            post_user(new_user)
+            user = verify_user(name, class_name, password)  # Modificado para usar senha
+            post_user(user)
             self.allow_close = True
-            self._safe_close()
+            self._close_window()
         except Exception as e:
             messagebox.showerror("Erro", f"Falha no login: {str(e)}")
 
     def _open_session_view(self, data):
-        if self.session_view is None:
+        if not self.session_view:
             self.session_view = SessionViewTemplate(self.COMPUTER_NAME, data, self)
-            self.root.withdraw()  # Esconde a janela de login
+            self.root.withdraw()
+
+    def _handle_window_close(self):
+        if not self.allow_close:
+            messagebox.showwarning("Atenção", "Realize o login para fechar.")
+        else:
+            self._close_window()
+
+    def _prevent_minimize(self, _):
+        if not self.allow_close:
+            self.root.deiconify()
+
+    def _close_window(self):
+        if self.session_view:
+            self.session_view.root.destroy()  # Modificado para fechar corretamente
+        self.root.destroy()
 
     def _on_session_view_closed(self):
         self.session_view = None
-        self.root.deiconify()  # Mostra novamente a janela de login
+        self.root.deiconify()
 
-    def _verify_close(self):
-        if not self.allow_close:
-            messagebox.showwarning(
-                "Atenção", 
-                "Por favor faça login primeiro ou insira credenciais válidas."
-            )
-        else:
-            self._safe_close()
-
-    def _prevent_minimize(self, event):
-        if not self.allow_close:
-            self.root.deiconify()  # Restaura a janela se tentar minimizar
-
-    def _safe_close(self):
-        if self.session_view:
-            self.session_view.close()
-        self.root.destroy()
-
-    def _center_root(self):
+    def _center_window(self, width, height):
         self.root.update_idletasks()
-        width = 350
-        height = 300
         x = (self.root.winfo_screenwidth() // 2) - (width // 2)
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f"{width}x{height}+{x}+{y}")
