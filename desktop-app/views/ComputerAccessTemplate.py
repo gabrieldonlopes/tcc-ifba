@@ -6,7 +6,7 @@ from views.SessionViewTemplate import SessionViewTemplate
 
 class ComputerAccessTemplate:
     def __init__(self):
-        self.COMPUTER_NAME = "ifba01"
+        self.COMPUTER_NAME = "ifba01" 
         self.CLASS_LIST = ["1ano", "2ano", "3ano"]
         self.allow_close = False
         self.session_view = None

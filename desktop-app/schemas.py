@@ -3,7 +3,7 @@ from pydantic import BaseModel
 class User(BaseModel): # usada para login do estudante
     name: str
     class_var: str
-    cpf: str
+    password: str
 
 class PcInfo(BaseModel): # informações do computador no momento de login
     cpu_usage: float
@@ -11,7 +11,6 @@ class PcInfo(BaseModel): # informações do computador no momento de login
     cpu_temp: float
 
 class Session(BaseModel):
-    machine_id: str
     session_start: str
     user: User
     pc_info: PcInfo
@@ -21,6 +20,8 @@ class MachineConfig(BaseModel):
     memory: str
     storage: str
     state_cleanliness: str
+    last_checked: str
+    lab_id: str
 
 class NewMachineConfig(MachineConfig):
     machine_key: str

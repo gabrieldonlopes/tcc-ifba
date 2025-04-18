@@ -1,18 +1,58 @@
 import customtkinter as ctk
 from tkinter import messagebox
+import asyncio
+from ..config import get_config,post_config
 
 class ConfigMachineTemplate:
     def __init__(self, parent_window=None):
         self.parent = parent_window
         self.root = ctk.CTkToplevel()
         self._init_window()
+        
+        # Inicia a tarefa assíncrona para buscar as configurações
+        asyncio.create_task(self._load_configurations())
 
     def _init_window(self):
         self.root.title("Configuração da Máquina")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.resizable(False, False)
-        self._build_ui()
         self._center_window(550, 500)
+        
+        # Adiciona um label de carregamento inicial
+        self.loading_label = ctk.CTkLabel(
+            self.root, 
+            text="Carregando configurações...", 
+            font=ctk.CTkFont(size=14)
+        )
+        self.loading_label.pack(pady=200)
+
+    async def _load_configurations(self):
+        try:
+            # Chama o método assíncrono para obter as configurações
+            config_data = get_config()
+            
+            # Remove o label de carregamento
+            self.loading_label.destroy()
+            
+            # Constrói a UI com os dados obtidos
+            self._build_ui()
+            
+            # Se houver dados, preenche os campos
+            if config_data:
+                self._fill_form_fields(config_data)
+                
+        except Exception as e:
+            self.loading_label.destroy()
+            messagebox.showerror("Erro", f"Falha ao carregar configurações:\n{str(e)}")
+            self._build_ui()  # Constrói a UI mesmo com erro
+
+    def _fill_form_fields(self, config_data):
+        self.motherboard_entry.insert(0, config_data.get("motherboard", ""))
+        self.memory_entry.insert(0, config_data.get("memory", ""))
+        self.storage_entry.insert(0, config_data.get("storage", ""))
+        self.clean_state_entry.insert(0, config_data.get("clean_state", ""))
+        self.last_check_entry.insert(0, config_data.get("last_check", ""))
+        self.lab_id_entry.insert(0, config_data.get("lab_id", ""))
 
     def _build_ui(self):
         # Frame principal
@@ -52,7 +92,7 @@ class ConfigMachineTemplate:
 
         # Estado de limpeza
         ctk.CTkLabel(form_frame, text="Estado de Limpeza:", **label_style).grid(row=3, column=0, padx=10, pady=5, sticky="ew")
-        self.clean_state_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: Limpo, Empoeirado", **entry_style)
+        self.clean_state_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: BOM, REGULAR. URGENTE", **entry_style)
         self.clean_state_entry.grid(row=3, column=1, padx=10, pady=5)
 
         # Última checagem
@@ -111,7 +151,7 @@ class ConfigMachineTemplate:
 
         try:
             # Lógica para salvar os dados
-            print("Dados da máquina:", data)
+            post_config(data)
             messagebox.showinfo("Sucesso", "Configuração salva com sucesso!")
             self.close()
         except Exception as e:

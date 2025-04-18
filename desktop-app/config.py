@@ -2,6 +2,7 @@ import secrets
 import json
 import os 
 import requests as req
+import asyncio
 
 from dotenv import load_dotenv
 from typing import Optional
@@ -14,7 +15,6 @@ load_dotenv()
 
 WEB_API_KEY = os.getenv("WEB_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
-
 
 def create_machine_key():
     if get_machine_key(): # verificacao de chave
@@ -37,8 +37,15 @@ def get_machine_key() -> Optional[str]:
         return None
     return config.get("machine_key")
 
-def get_config():
-    pass
+def get_config(): # TODO: adicionar tratamento de erros caso o sistema esteja fora do ar
+    MACHINE_KEY = get_machine_key()
+    url = f"{BASE_URL}/config/{MACHINE_KEY}"
+    headers = {
+            "api-key": WEB_API_KEY,
+            "Content-Type": "application/json"
+        } 
+
+    return req.get(url=url,headers=headers)
 
 def post_config(machine_config: MachineConfig):
     try:
@@ -59,7 +66,7 @@ def post_config(machine_config: MachineConfig):
     
     except(MachineKeyAlreadyExists):
         MACHINE_KEY = get_machine_key()
-        url = f"{BASE_URL}/config/config_machine"  
+        url = f"{BASE_URL}/config"  
         headers = {
             "api-key": WEB_API_KEY,
             "machine_key": MACHINE_KEY,

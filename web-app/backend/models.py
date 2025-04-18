@@ -38,7 +38,7 @@ class Machine(Base):
     state_cleanliness: Mapped[StateCleanliness] = mapped_column(SqlEnum(StateCleanliness))
     last_checked: Mapped[datetime] = mapped_column(DateTime)
 
-    lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))  # Alterado para String
+    lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))  
     lab: Mapped["Lab"] = relationship("Lab", back_populates="machines")
     
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="machine")
