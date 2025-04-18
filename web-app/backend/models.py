@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Table
+from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column,relationship, DeclarativeBase, validates
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
@@ -24,8 +24,8 @@ class Classes(str, Enum): # modificar para receber turmas na hora da configuraç
 user_lab_association = Table( # tabela utilizada para integração n..n
     "user_lab_association",
     Base.metadata,
-    mapped_column("user_id", ForeignKey("User.user_id"), primary_key=True),
-    mapped_column("lab_id", ForeignKey("Lab.lab_id"), primary_key=True)
+    Column("user_id", ForeignKey("User.user_id"), primary_key=True),
+    Column("lab_id", ForeignKey("Lab.lab_id"), primary_key=True)
 )
 
 class Machine(Base):
@@ -57,7 +57,7 @@ class Student(Base):
 
     student_id: Mapped[int] = mapped_column(Integer,primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
-    cpf: Mapped[str] = mapped_column(String(11), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))  
     class_var: Mapped[Classes] = mapped_column(SqlEnum(Classes))
 
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student") 

@@ -1,5 +1,6 @@
 import uvicorn
 import argparse
+import asyncio
 import os
 
 from fastapi import FastAPI, Depends, HTTPException, Header
@@ -9,8 +10,8 @@ from typing import List
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from backend.database import create_tables
-from backend.routers import session,config
+from database import create_tables
+from routers import session,config
 
 from schemas import User,MachineResponse
 
@@ -31,8 +32,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(session.router, prefix="/session")
-app.include_router(config.router, prefix="/config")
+#app.include_router(session.router, prefix="/session")
+#app.include_router(config.router, prefix="/config")
+
+async def initialize_db(create_db: bool): # verifica se a db existe
+    if create_db:
+        await create_tables()
+        
 
 def verify_key(api_key:str = Header(...)):
     if api_key != WEB_API_KEY:
@@ -54,5 +60,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    if args.create_db:
+        asyncio.run(initialize_db(args.create_db))
+
     if args.run_server:
         uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info", reload=True)
+    
