@@ -21,13 +21,13 @@ origins = [
     # adicionar link do servidor npm
 ]
 
-app.add_middleware( # serve para restringir o acesso da API
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+#app.add_middleware( # serve para restringir o acesso da API
+#    CORSMiddleware,
+#    allow_origins=origins,
+#    allow_credentials=True,
+#    allow_methods=["*"],
+#    allow_headers=["*"],
+#)
 
 async def initialize_db(create_db: bool): # verifica se a db existe
     if create_db:

@@ -1,7 +1,12 @@
+from datetime import datetime
 import customtkinter as ctk
 from tkinter import messagebox
 import asyncio
-from ..config import get_config,post_config
+
+from pydantic import ValidationError
+from schemas import MachineConfig,StateCleanliness
+from config import get_config,post_config_from_ui
+from utils.DatePicker import DatePicker
 
 class ConfigMachineTemplate:
     def __init__(self, parent_window=None):
@@ -9,14 +14,15 @@ class ConfigMachineTemplate:
         self.root = ctk.CTkToplevel()
         self._init_window()
         
-        # Inicia a tarefa assíncrona para buscar as configurações
-        asyncio.create_task(self._load_configurations())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._load_configurations())
 
     def _init_window(self):
         self.root.title("Configuração da Máquina")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.resizable(False, False)
-        self._center_window(550, 500)
+        self._center_window(600, 500)
         
         # Adiciona um label de carregamento inicial
         self.loading_label = ctk.CTkLabel(
@@ -28,7 +34,7 @@ class ConfigMachineTemplate:
 
     async def _load_configurations(self):
         try:
-            config_data = get_config()
+            config_data = await get_config()
             
             self.loading_label.destroy()
             self._build_ui()
@@ -41,13 +47,14 @@ class ConfigMachineTemplate:
             messagebox.showerror("Erro", f"Falha ao carregar configurações:\n{str(e)}")
             self._build_ui()  # Constrói a UI mesmo com erro
 
-    def _fill_form_fields(self, config_data):
-        self.motherboard_entry.insert(0, config_data.get("motherboard", ""))
-        self.memory_entry.insert(0, config_data.get("memory", ""))
-        self.storage_entry.insert(0, config_data.get("storage", ""))
-        self.clean_state_entry.insert(0, config_data.get("clean_state", ""))
-        self.last_check_entry.insert(0, config_data.get("last_check", ""))
-        self.lab_id_entry.insert(0, config_data.get("lab_id", ""))
+    def _fill_form_fields(self, config: MachineConfig):
+        self.name_entry.insert(0, config.name)
+        self.motherboard_entry.insert(0, config.motherboard)
+        self.memory_entry.insert(0, config.memory)
+        self.storage_entry.insert(0, config.storage)
+        self.clean_state_entry.insert(0, config.state_cleanliness)
+        self.last_check_entry.insert(0, config.last_checked)
+        self.lab_id_entry.insert(0, config.lab_id)
 
     def _build_ui(self):
         # Frame principal
@@ -75,30 +82,50 @@ class ConfigMachineTemplate:
         self.motherboard_entry = ctk.CTkEntry(form_frame, placeholder_text="Modelo da placa-mãe", **entry_style)
         self.motherboard_entry.grid(row=0, column=1, padx=10, pady=5)
 
+        # Nome do Computador
+        ctk.CTkLabel(form_frame, text="Nome do Computador:", **label_style).grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+        self.name_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: PC-LAB01", **entry_style)
+        self.name_entry.grid(row=1, column=1, padx=10, pady=5)
+
         # Memória
-        ctk.CTkLabel(form_frame, text="Memória:", **label_style).grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+        ctk.CTkLabel(form_frame, text="Memória:", **label_style).grid(row=2, column=0, padx=10, pady=5, sticky="ew")
         self.memory_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: 8GB DDR4", **entry_style)
-        self.memory_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.memory_entry.grid(row=2, column=1, padx=10, pady=5)
 
         # Armazenamento
-        ctk.CTkLabel(form_frame, text="Armazenamento:", **label_style).grid(row=2, column=0, padx=10, pady=5, sticky="ew")
+        ctk.CTkLabel(form_frame, text="Armazenamento:", **label_style).grid(row=3, column=0, padx=10, pady=5, sticky="ew")
         self.storage_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: 256GB SSD", **entry_style)
-        self.storage_entry.grid(row=2, column=1, padx=10, pady=5)
+        self.storage_entry.grid(row=3, column=1, padx=10, pady=5)
 
         # Estado de limpeza
-        ctk.CTkLabel(form_frame, text="Estado de Limpeza:", **label_style).grid(row=3, column=0, padx=10, pady=5, sticky="ew")
-        self.clean_state_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: BOM, REGULAR. URGENTE", **entry_style)
-        self.clean_state_entry.grid(row=3, column=1, padx=10, pady=5)
+        combobox_style = {
+            "width": 300,
+            "height": 35,
+            "font": ctk.CTkFont(size=12),
+            "dropdown_font": ctk.CTkFont(size=12),
+            "button_color": "#3b3b3b",
+            "dropdown_fg_color": "#2b2b2b",
+            "dropdown_hover_color": "#3b3b3b"
+        }
+        ctk.CTkLabel(form_frame, text="Estado de Limpeza:", **label_style).grid(row=4, column=0, padx=10, pady=5, sticky="ew")
+        self.clean_state_combobox = ctk.CTkComboBox(
+            form_frame,
+            values=[e.value for e in StateCleanliness],
+            state="readonly",
+            **combobox_style
+        )
+        self.clean_state_combobox.grid(row=4, column=1, padx=10, pady=5)
+        self.clean_state_combobox.set("BOM") 
 
         # Última checagem
-        ctk.CTkLabel(form_frame, text="Última Checagem:", **label_style).grid(row=4, column=0, padx=10, pady=5, sticky="ew")
-        self.last_check_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: 2025-04-18", **entry_style)
-        self.last_check_entry.grid(row=4, column=1, padx=10, pady=5)
+        ctk.CTkLabel(form_frame, text="Última Checagem:", **label_style).grid(row=5, column=0, padx=10, pady=5, sticky="ew")
+        self.date_picker = DatePicker(form_frame)
+        self.date_picker.grid(row=5, column=1, padx=10, pady=5, sticky="w")
 
         # Lab ID
-        ctk.CTkLabel(form_frame, text="Lab ID:", **label_style).grid(row=5, column=0, padx=10, pady=5, sticky="ew")
+        ctk.CTkLabel(form_frame, text="Lab ID:", **label_style).grid(row=6, column=0, padx=10, pady=5, sticky="ew")
         self.lab_id_entry = ctk.CTkEntry(form_frame, placeholder_text="Ex: Lab01", **entry_style)
-        self.lab_id_entry.grid(row=5, column=1, padx=10, pady=5)
+        self.lab_id_entry.grid(row=6, column=1, padx=10, pady=5)
 
         # Frame dos botões
         btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -131,26 +158,40 @@ class ConfigMachineTemplate:
         ).pack(side="right", padx=15)
 
     def _handle_save(self):
-        data = {
-            "motherboard": self.motherboard_entry.get().strip(),
-            "memory": self.memory_entry.get().strip(),
-            "storage": self.storage_entry.get().strip(),
-            "clean_state": self.clean_state_entry.get().strip(),
-            "last_check": self.last_check_entry.get().strip(),
-            "lab_id": self.lab_id_entry.get().strip(),
-        }
-
-        if not all(data.values()):
-            messagebox.showwarning("Atenção", "Todos os campos devem ser preenchidos.")
-            return
-
         try:
-            # Lógica para salvar os dados
-            post_config(data)
-            messagebox.showinfo("Sucesso", "Configuração salva com sucesso!")
-            self.close()
+            data = {
+                "motherboard": self.motherboard_entry.get().strip(),
+                "name": self.name_entry.get().strip(),
+                "memory": self.memory_entry.get().strip(),
+                "storage": self.storage_entry.get().strip(),
+                "state_cleanliness": self.clean_state_combobox.get(), 
+                "last_checked": self.date_picker.get_date_string(),
+                "lab_id": self.lab_id_entry.get().strip(),
+            }
+
+            # Validação de campos vazios
+            if not all(data.values()):
+                raise ValueError("Todos os campos devem ser preenchidos")
+                
+            if not self.date_picker.get_date_string():
+                raise ValueError("Selecione uma data válida")
+
+            success, message = post_config_from_ui(data)
+            if success:
+                messagebox.showinfo("Sucesso", message)
+                self.close()
+            else:
+                messagebox.showerror("Erro", message)
+
+        except ValueError as e:
+            messagebox.showwarning("Atenção", str(e))
+        except ValidationError as e:
+            errors = "\n".join([f"{'->'.join(str(loc) for loc in error['loc'])}: {error['msg']}" 
+                            for error in e.errors()])
+            messagebox.showerror("Erro de Validação", f"Corrija os campos:\n{errors}")
         except Exception as e:
-            messagebox.showerror("Erro", f"Falha ao salvar configuração:\n{str(e)}")
+            messagebox.showerror("Erro", f"Falha ao salvar:\n{str(e)}")
+
 
     def _center_window(self, width, height):
         self.root.update_idletasks()

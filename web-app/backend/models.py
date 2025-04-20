@@ -52,9 +52,9 @@ class Student(Base):
     password_hash: Mapped[str] = mapped_column(String(255))  
     class_var: Mapped[Classes] = mapped_column(SqlEnum(Classes))
 
-    sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student") 
+    sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student")
 
-class Lab(Base):
+class Lab(Base):    
     __tablename__ = "Lab"
 
     lab_id: Mapped[str] = mapped_column(String(10), primary_key=True)
@@ -73,10 +73,11 @@ class Session(Base):
     #session_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     machine_key: Mapped[str] = mapped_column(ForeignKey("Machine.machine_key"))
-    machine: Mapped["Machine"] = relationship("Machine", backref="sessions")
+    machine: Mapped["Machine"] = relationship("Machine", back_populates="sessions")
 
     student_id: Mapped[int] = mapped_column(ForeignKey("Student.student_id"))
-    student: Mapped["Student"] = relationship("Student", backref="sessions")
+    student: Mapped["Student"] = relationship("Student", back_populates="sessions")
+
 
     @validates("session_start")
     def validate_session_start(self, key, value):
