@@ -1,12 +1,12 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Depends, Header
-from pydantic import Callable
+from typing import Callable
 from sqlalchemy.ext.asyncio import AsyncSession 
 
-from ..database import get_db
-from ..schemas import MachineConfig, NewMachineConfig
-from ..config.config_handler import (
+from database import get_db
+from schemas import MachineConfig, NewMachineConfig
+from config.machine_config_handler import (
     get_machine_config,post_new_machine_config,
     delete_machine, update_machine_config
 )

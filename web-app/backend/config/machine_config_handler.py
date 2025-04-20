@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 
-from ..schemas import MachineConfig,NewMachineConfig
-from ..models import Machine
+from schemas import MachineConfig,NewMachineConfig
+from models import Machine
 
 
 async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig:
@@ -34,14 +34,14 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
     )
     if existing_machine.scalars().first() == None:
         db_machine = Machine(
-            machine_key=new_machine.machine_key,
             name=new_machine.name,
             motherboard=new_machine.motherboard,
             memory=new_machine.memory,
             storage=new_machine.storage,
             state_cleanliness=new_machine.state_cleanliness,
             last_checked=new_machine.last_checked,
-            lab_id=new_machine.lab_id
+            lab_id=new_machine.lab_id,
+            machine_key=new_machine.machine_key
         )
         db.add(db_machine)
         await db.commit()

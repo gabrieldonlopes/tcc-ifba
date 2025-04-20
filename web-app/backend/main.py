@@ -1,4 +1,3 @@
-from backend.routers import machine_config
 import uvicorn
 import argparse
 import asyncio
@@ -7,14 +6,11 @@ import os
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
-from typing import List
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from database import create_tables
-from routers import session
 
-from schemas import User,MachineResponse
+from routers import machine_config
 
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
