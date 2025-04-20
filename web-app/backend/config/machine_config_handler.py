@@ -1,5 +1,5 @@
 import asyncio
-
+from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
@@ -21,7 +21,7 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
         memory=machine_config_obj.memory,
         storage=machine_config_obj.storage,
         state_cleanliness=machine_config_obj.state_cleanliness,
-        last_checked=machine_config_obj.last_checked,
+        last_checked=machine_config_obj.last_checked.strftime("%d-%m-%Y"),
         lab_id=machine_config_obj.lab_id
     )
 
@@ -71,6 +71,7 @@ async def update_machine_config(machine_key:str,new_config:MachineConfig, db:Asy
 
         # utilizar getters e setters dinamicamente para alterar apenas se o valor não for
         # vazio e se ele for diferente do que o já armazenado na db 
+        new_config.last_checked = datetime.strptime(new_config.last_checked, "%d-%m-%Y")
         for field, new_value in new_config.dict().items():
             if new_value is not None:
                 current_value = getattr(machine_config_obj, field, None)

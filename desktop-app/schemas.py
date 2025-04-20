@@ -1,4 +1,4 @@
-from pydantic import BaseModel, BeforeValidator, field_serializer
+from pydantic import BaseModel, BeforeValidator, field_validator
 from datetime import datetime
 from typing import Annotated
 from enum import Enum
@@ -30,30 +30,30 @@ class Session(BaseModel):
     pc_info: PcInfo
 
 class MachineConfig(BaseModel):
-    name:str
+    name: str
     motherboard: str
     memory: str
     storage: str
     state_cleanliness: StateCleanliness
-    last_checked: str
+    last_checked: str  # Já está como string
     lab_id: str
-    #@field_serializer('last_checked')
-    #def serialize_last_checked(self, value: datetime) -> str:
-    #    return value.strftime("%d-%m-%Y")
 
-    #@field_serializer('state_cleanliness')
-    #def serialize_clean_state(self, value: StateCleanliness) -> str:
-    #    return value.value
-
-   # def model_dump(self, **kwargs):
-    #    return {
-     #       "name": self.name,
-      #      "motherboard": self.motherboard,
-       #     "memory": self.memory,
-        #    "storage": self.storage,
-         #   "state_cleanliness": self.state_cleanliness.value,  # Usa .value do Enum
-          #  "last_checked": self.serialize_last_checked(self.last_checked),
-           # "lab_id": self.lab_id
-        #}
+    @field_validator('state_cleanliness', mode='before')
+    def validate_clean_state(cls, value):
+        if isinstance(value, str):
+            try:
+                return StateCleanliness(value)
+            except ValueError:
+                raise ValueError(f"Estado inválido. Use: {[e.value for e in StateCleanliness]}")
+        return value
+    
+    @field_validator('last_checked')
+    def validate_date_format(cls, value):
+        try:
+            datetime.strptime(value, "%d-%m-%Y")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use DD-MM-AAAA")
+        
 class NewMachineConfig(MachineConfig):
     machine_key: str

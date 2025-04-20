@@ -44,15 +44,22 @@ def get_machine_key() -> Optional[str]:
 
 async def get_config() -> MachineConfig | None:
     machine_key = get_machine_key()
+    headers = {
+        "api-key": WEB_API_KEY,
+        "Content-Type": "application/json"
+    }
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"{BASE_URL}/machine_config/{machine_key}") as response:
+        async with session.get(f"{BASE_URL}/machine_config/{machine_key}",headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
-                return MachineConfig(**data)  # valida e retorna como objeto
+                try:
+                    return MachineConfig(**data)
+                except ValidationError as e:
+                    raise Exception(f"Dados inválidos da API: {e.errors()}")
             elif response.status == 404:
                 return None
-            else:
-                raise Exception(f"Erro na requisição: {response.status}")
+            raise Exception(f"Erro na requisição: {response.status}")
+        
 
 def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
     try:

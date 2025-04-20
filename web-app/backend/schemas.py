@@ -3,14 +3,6 @@ from typing import Annotated
 from pydantic import BaseModel, BeforeValidator, field_validator
 from models import StateCleanliness
 
-def parse_last_checked(value: str) -> datetime:
-    if isinstance(value, datetime):
-        return value
-    try:
-        return datetime.strptime(value, "%d-%m-%Y")
-    except ValueError:
-        raise ValueError("Formato de data inválido. Use DD-MM-AAAA")
-
 class User(BaseModel):
     name: str
     class_var: str
@@ -27,11 +19,11 @@ class MachineConfig(BaseModel):
     memory: str
     storage: str
     state_cleanliness: StateCleanliness
-    last_checked: Annotated[datetime, BeforeValidator(parse_last_checked)]
+    last_checked: str  # Alterado para string
     lab_id: str
+
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%d-%m-%Y"),
             StateCleanliness: lambda v: v.value
         }
 

@@ -52,9 +52,17 @@ class ConfigMachineTemplate:
         self.motherboard_entry.insert(0, config.motherboard)
         self.memory_entry.insert(0, config.memory)
         self.storage_entry.insert(0, config.storage)
-        self.clean_state_entry.insert(0, config.state_cleanliness)
-        self.last_check_entry.insert(0, config.last_checked)
         self.lab_id_entry.insert(0, config.lab_id)
+
+        if isinstance(config.state_cleanliness, StateCleanliness):
+            self.clean_state_combobox.set(config.state_cleanliness.value)
+        else:
+            self.clean_state_combobox.set(str(config.state_cleanliness))
+
+        
+        if hasattr(self, 'date_picker'):  # Se estiver usando DatePicker
+            self.date_picker.entry.delete(0, "end")
+            self.date_picker.entry.insert(0, config.last_checked)    
 
     def _build_ui(self):
         # Frame principal
