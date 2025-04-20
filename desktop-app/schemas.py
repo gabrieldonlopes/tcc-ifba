@@ -17,6 +17,7 @@ class Session(BaseModel):
 
 class MachineConfig(BaseModel):
     motherboard: str
+    name:str
     memory: str
     storage: str
     state_cleanliness: str

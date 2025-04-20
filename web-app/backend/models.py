@@ -32,6 +32,7 @@ class Machine(Base):
     __tablename__ = "Machine"
     
     machine_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
     motherboard: Mapped[str] = mapped_column(String(100))
     memory: Mapped[str] = mapped_column(String(100))
     storage: Mapped[str] = mapped_column(String(100))

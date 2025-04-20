@@ -28,16 +28,11 @@ class ConfigMachineTemplate:
 
     async def _load_configurations(self):
         try:
-            # Chama o método assíncrono para obter as configurações
             config_data = get_config()
             
-            # Remove o label de carregamento
             self.loading_label.destroy()
-            
-            # Constrói a UI com os dados obtidos
             self._build_ui()
             
-            # Se houver dados, preenche os campos
             if config_data:
                 self._fill_form_fields(config_data)
                 

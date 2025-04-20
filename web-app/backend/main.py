@@ -1,3 +1,4 @@
+from backend.routers import machine_config
 import uvicorn
 import argparse
 import asyncio
@@ -11,7 +12,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from database import create_tables
-from routers import session,config
+from routers import session
 
 from schemas import User,MachineResponse
 
@@ -24,7 +25,7 @@ origins = [
     # adicionar link do servidor npm
 ]
 
-app.add_middleware(
+app.add_middleware( # serve para restringir o acesso da API
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -32,18 +33,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#app.include_router(session.router, prefix="/session")
-#app.include_router(config.router, prefix="/config")
-
 async def initialize_db(create_db: bool): # verifica se a db existe
     if create_db:
         await create_tables()
         
-
+#TODO: melhorar essa verificacao de chave, pois ela deve ser feita via param, não header
 def verify_key(api_key:str = Header(...)):
     if api_key != WEB_API_KEY:
         raise HTTPException(status_code=401, detail="Chave de API inválida")
 
+#app.include_router(session.router, prefix="/session")
+app.include_router(machine_config.router, prefix="/machine_config", dependencies=[Depends(verify_key)])     
 
 
 if __name__ == "__main__":

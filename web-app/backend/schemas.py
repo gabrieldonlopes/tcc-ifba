@@ -10,7 +10,14 @@ class PcInfo(BaseModel):
     ram_usage: float
     cpu_temp: float
 
-class MachineResponse(BaseModel):
-    session_start: str
-    user: User
-    pc_info: PcInfo
+class MachineConfig(BaseModel):
+    name:str
+    motherboard: str
+    memory: str
+    storage: str
+    state_cleanliness: str
+    last_checked: str
+    lab_id: str
+
+class NewMachineConfig(MachineConfig):
+    machine_key: str
