@@ -1,4 +1,4 @@
-from pydantic import BaseModel, BeforeValidator, field_validator
+from pydantic import BaseModel, field_serializer, field_validator
 from datetime import datetime
 from typing import Annotated
 from enum import Enum
@@ -46,14 +46,7 @@ class MachineConfig(BaseModel):
             except ValueError:
                 raise ValueError(f"Estado inválido. Use: {[e.value for e in StateCleanliness]}")
         return value
-    
-    @field_validator('last_checked')
-    def validate_date_format(cls, value):
-        try:
-            datetime.strptime(value, "%d-%m-%Y")
-            return value
-        except ValueError:
-            raise ValueError("Formato de data inválido. Use DD-MM-AAAA")
+   
         
 class NewMachineConfig(MachineConfig):
     machine_key: str

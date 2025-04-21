@@ -59,7 +59,7 @@ async def get_config() -> MachineConfig | None:
             elif response.status == 404:
                 return None
             raise Exception(f"Erro na requisição: {response.status}")
-        
+
 
 def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
     try:
@@ -90,8 +90,8 @@ def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
                 url=f"{BASE_URL}/machine_config/update/{machine_key}",
                 headers={
                     "api-key": WEB_API_KEY,
-                    "Content-Type": "application/json"
-                },
+                        "Content-Type": "application/json"
+                    },
                 json=MachineConfig(**raw_data).model_dump(),
                 verify=False,
                 timeout=10

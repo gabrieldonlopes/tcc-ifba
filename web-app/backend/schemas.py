@@ -19,12 +19,21 @@ class MachineConfig(BaseModel):
     memory: str
     storage: str
     state_cleanliness: StateCleanliness
-    last_checked: str  # Alterado para string
+    last_checked: str  # String no formato DD-MM-AAAA
     lab_id: str
+
+    @field_validator('last_checked')
+    def validate_date_format(cls, value):
+        try:
+            datetime.strptime(value, "%d-%m-%Y")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use DD-MM-AAAA")
 
     class Config:
         json_encoders = {
-            StateCleanliness: lambda v: v.value
+            StateCleanliness: lambda v: v.value,
+            datetime: lambda v: v.strftime("%d-%m-%Y") if v else None
         }
 
 class NewMachineConfig(MachineConfig):
