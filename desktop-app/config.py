@@ -64,21 +64,35 @@ async def get_config() -> MachineConfig | None:
 def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
     try:
         create_machine_key()
-        machine_config = NewMachineConfig(machine_key=get_machine_key(),**raw_data)
-        print(machine_config)
+        machine_config = NewMachineConfig(machine_key=get_machine_key(), **raw_data)
         response = req.post(
-            url=f"{BASE_URL}/machine_config/new_machine",  # URL completa
+            url=f"{BASE_URL}/machine_config/new_machine",
             headers={
                 "api-key": WEB_API_KEY,
                 "Content-Type": "application/json"
             },
             json=machine_config.model_dump(),
             verify=False,
-            timeout=10  # Adicione timeout
+            timeout=10
         )
+        
+        # Tratamento específico para status 400
+        if response.status_code == 400:
+            error_detail = response.json().get('detail', 'Máquina já registrada')
+            return False, error_detail
+        
         response.raise_for_status()
         return True, "Configuração salva com sucesso"
 
+    except req.exceptions.HTTPError as e:
+        if e.response.status_code == 400:
+            try:
+                error_detail = e.response.json().get('detail', str(e))
+                return False, error_detail
+            except ValueError:
+                return False, f"Erro 400: {str(e)}"
+        return False, f"Erro HTTP {e.response.status_code}: {str(e)}"
+    
     except MachineKeyAlreadyExists:
         try:
             machine_key = get_machine_key()
@@ -92,14 +106,32 @@ def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
                 verify=False,
                 timeout=10
             )
+            
+            if response.status_code == 400:
+                error_detail = response.json().get('detail', 'Erro ao atualizar')
+                return False, error_detail
+                
             response.raise_for_status()
             return True, "Configuração atualizada com sucesso"
+            
+        except req.exceptions.HTTPError as e:
+            if e.response.status_code == 400:
+                error_detail = e.response.json().get('detail', str(e))
+                return False, error_detail
+            return False, f"Erro ao atualizar: {str(e)}"
+            
         except Exception as e:
             return False, f"Falha ao atualizar: {str(e)}"
 
     except req.exceptions.RequestException as e:
         return False, f"Erro de conexão: {str(e)}"
+        
     except ValidationError as e:
-        return False, f"Erro de validação: {e.errors()}"
+        error_messages = []
+        for error in e.errors():
+            field = "->".join(map(str, error['loc']))
+            error_messages.append(f"{field}: {error['msg']}")
+        return False, f"Erro de validação: {'; '.join(error_messages)}"
+        
     except Exception as e:
         return False, f"Erro inesperado: {str(e)}"
