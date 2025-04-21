@@ -76,23 +76,13 @@ def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
             timeout=10
         )
         
-        # Tratamento específico para status 400
-        if response.status_code == 400:
-            error_detail = response.json().get('detail', 'Máquina já registrada')
-            return False, error_detail
         
         response.raise_for_status()
         return True, "Configuração salva com sucesso"
 
     except req.exceptions.HTTPError as e:
-        if e.response.status_code == 400:
-            try:
-                error_detail = e.response.json().get('detail', str(e))
-                return False, error_detail
-            except ValueError:
-                return False, f"Erro 400: {str(e)}"
-        return False, f"Erro HTTP {e.response.status_code}: {str(e)}"
-    
+            error_detail = e.response.json().get('detail', str(e))
+            return False, error_detail    
     except MachineKeyAlreadyExists:
         try:
             machine_key = get_machine_key()
@@ -106,19 +96,13 @@ def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
                 verify=False,
                 timeout=10
             )
-            
-            if response.status_code == 400:
-                error_detail = response.json().get('detail', 'Erro ao atualizar')
-                return False, error_detail
                 
             response.raise_for_status()
             return True, "Configuração atualizada com sucesso"
             
         except req.exceptions.HTTPError as e:
-            if e.response.status_code == 400:
-                error_detail = e.response.json().get('detail', str(e))
-                return False, error_detail
-            return False, f"Erro ao atualizar: {str(e)}"
+            error_detail = e.response.json().get('detail', str(e))
+            return False, error_detail
             
         except Exception as e:
             return False, f"Falha ao atualizar: {str(e)}"

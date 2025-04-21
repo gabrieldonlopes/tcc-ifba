@@ -44,7 +44,7 @@ class ConfigMachineTemplate:
                 
         except Exception as e:
             self.loading_label.destroy()
-            messagebox.showerror("Erro", f"Falha ao carregar configurações:\n{str(e)}")
+            messagebox.showerror("Erro", f"Servidor não foi encontrado") # TODO: registrar dados mesmo quando não encontra server
             self._build_ui()  # Constrói a UI mesmo com erro
 
     def _fill_form_fields(self, config: MachineConfig):

@@ -18,7 +18,7 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
     machine_config_obj = result.scalars().first()
 
     if not machine_config_obj:
-        raise HTTPException(status_code=404,detail="Machine not Found")
+        raise HTTPException(status_code=404,detail="Computador não foi encontrado")
 
     return MachineConfig(
         motherboard=machine_config_obj.motherboard,
@@ -32,7 +32,7 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
 
 async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession):
     if not await verify_lab(new_machine.lab_id,db=db):
-        raise HTTPException(status_code=404,detail="Lab not found")
+        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
 
     existing_machine = await db.execute(
         select(Machine).where(or_(
@@ -54,31 +54,31 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
         )
         db.add(db_machine)
         await db.commit()
-        return {"message":"Machine Config registered successfully"}
+        return {"message":"Configuração do computador registrada com Sucesso!"}
     else:
-        raise HTTPException(status_code=400,detail="Machine already registered.")
+        raise HTTPException(status_code=400,detail="Computador já registrado")
 
 async def delete_machine(machine_key:str, db:AsyncSession):
     result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
     machine_config_obj = result.scalars().first()
     
     if not machine_config_obj:
-        raise HTTPException(status_code=404,detail="Machine not Found") 
+        raise HTTPException(status_code=404,detail="Computador não foi encontrado") 
     
     await db.delete(machine_config_obj)
     await db.commit()
     
-    return {"message":"Machine deleted from Lab successfully"}
+    return {"message":"Computador removido do Laboratório com Sucesso"}
 
 async def update_machine_config(machine_key:str,new_config:MachineConfig, db:AsyncSession):
     if not await verify_lab(new_config.lab_id,db=db):
-        raise HTTPException(status_code=404,detail="Lab not found")
+        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
     try:
         result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
         machine_config_obj = result.scalars().first()
 
         if not machine_config_obj:
-            raise HTTPException(status_code=404,detail="Machine not Found")
+            raise HTTPException(status_code=404,detail="Computador não foi encontrado")
 
         # utilizar getters e setters dinamicamente para alterar apenas se o valor não for
         # vazio e se ele for diferente do que o já armazenado na db 
@@ -92,7 +92,7 @@ async def update_machine_config(machine_key:str,new_config:MachineConfig, db:Asy
         await db.commit()
         await db.refresh(machine_config_obj)
 
-        return {"message": "Machine config updated successfully"}
+        return {"message": "Configuração da máquina salva com sucesso"}
     
     except Exception as e:
         await db.rollback()
