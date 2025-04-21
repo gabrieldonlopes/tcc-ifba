@@ -3,8 +3,10 @@ import os
 from dotenv import load_dotenv
 from typing import List
 
+import json
+
 from utils.data_handler import transform_reponse
-from schemas import Session, User
+from schemas import Session, User, PcInfo
 from config import get_machine_key
 load_dotenv()
 
@@ -25,9 +27,19 @@ def post_user(new_user:User):
     # TODO: separar essa transformação de objeto para controller
     # TODO: adicionar verificação de usuario
     req.post(url=url,headers=headers,json=machine_response.model_dump(),verify=False)
-
+    
 def get_all_sessions() -> List[Session]:
-    response = req.get(url=url)
-    sessions_data = response.json()
-    return [Session(**session) for session in sessions_data]
+    #response = req.get(url=url)
+    #sessions_data = response.json()
+    
+    with open("session_examples.json", "r") as file:
+        sessions_data = json.load(file)
+
+    sessions: List[Session] = []
+    for session in sessions_data:
+        user = User(**session["user"])
+        pc_info = PcInfo(**session["pc_info"])
+        n_session = Session(session_start=session["session_start"],user=user,pc_info=pc_info)
+        sessions.append(n_session)
+    return sessions
 
