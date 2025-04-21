@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Table, Column
+from sqlalchemy import Integer, String, Boolean, Date, DateTime, ForeignKey, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column,relationship, DeclarativeBase, validates
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
@@ -37,7 +37,7 @@ class Machine(Base):
     memory: Mapped[str] = mapped_column(String(100))
     storage: Mapped[str] = mapped_column(String(100))
     state_cleanliness: Mapped[StateCleanliness] = mapped_column(SqlEnum(StateCleanliness))
-    last_checked: Mapped[datetime] = mapped_column(DateTime)
+    last_checked: Mapped[datetime] = mapped_column(Date)
 
     lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))  
     lab: Mapped["Lab"] = relationship("Lab", back_populates="machines")

@@ -3,10 +3,15 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
+from sqlalchemy import or_
 
 from schemas import MachineConfig,NewMachineConfig
-from models import Machine
+from models import Machine, Lab
 
+async def verify_lab(lab_id: str, db: AsyncSession) -> bool:
+    lab_obj = await db.execute(select(Lab).filter(Lab.lab_id == lab_id))
+    existing_lab = lab_obj.scalars().first()
+    return True if existing_lab else False
 
 async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig:
     result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
@@ -26,12 +31,16 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
     )
 
 async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession):
+    if not await verify_lab(new_machine.lab_id,db=db):
+        raise HTTPException(status_code=404,detail="Lab not found")
+
     existing_machine = await db.execute(
-        select(Machine).where(
+        select(Machine).where(or_(
             Machine.machine_key == new_machine.machine_key,
             Machine.name == new_machine.name
-        )    
+        ))    
     )
+    new_machine.last_checked = datetime.strptime(new_machine.last_checked, "%d-%m-%Y")
     if existing_machine.scalars().first() == None:
         db_machine = Machine(
             name=new_machine.name,
@@ -62,6 +71,8 @@ async def delete_machine(machine_key:str, db:AsyncSession):
     return {"message":"Machine deleted from Lab successfully"}
 
 async def update_machine_config(machine_key:str,new_config:MachineConfig, db:AsyncSession):
+    if not await verify_lab(new_config.lab_id,db=db):
+        raise HTTPException(status_code=404,detail="Lab not found")
     try:
         result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
         machine_config_obj = result.scalars().first()
