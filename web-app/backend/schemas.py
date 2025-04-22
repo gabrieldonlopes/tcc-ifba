@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Annotated
-from pydantic import BaseModel, BeforeValidator, field_validator
+from typing import List
+from pydantic import BaseModel, field_validator
 from models import StateCleanliness
 
 class User(BaseModel):
@@ -38,3 +38,13 @@ class MachineConfig(BaseModel):
 
 class NewMachineConfig(MachineConfig):
     machine_key: str
+
+class LabCreate(BaseModel):
+    lab_id: str
+    name: str
+    classes: List[str]
+
+class LabResponse(BaseModel):
+    name: str
+    classes: List[str]
+

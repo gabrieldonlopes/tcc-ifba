@@ -26,18 +26,18 @@ async def handle_request(func: Callable, *args, **kwargs):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{machine_key}",response_model=MachineConfig)
-async def get_machine_config_endpoint(machine_key:str, db: AsyncSession = Depends(get_db)):
-    return await get_machine_config(machine_key=machine_key,db=db)
+@router.get("/{machine_key}", response_model=MachineConfig)
+async def get_machine_config_endpoint(machine_key: str, db: AsyncSession = Depends(get_db)):
+    return await handle_request(get_machine_config, machine_key=machine_key, db=db)
 
 @router.post("/new_machine")
-async def post_machine_config_endpoint(new_machine:NewMachineConfig, db: AsyncSession = Depends(get_db)):
-    return await post_new_machine_config(new_machine=new_machine,db=db)
+async def post_machine_config_endpoint(new_machine: NewMachineConfig, db: AsyncSession = Depends(get_db)):
+    return await handle_request(post_new_machine_config, new_machine=new_machine, db=db)
 
 @router.delete("/delete/{machine_key}")
-async def delete_machine_endpoint(machine_key:str, db: AsyncSession = Depends(get_db)):
-    return await delete_machine(machine_key=machine_key, db=db)
+async def delete_machine_endpoint(machine_key: str, db: AsyncSession = Depends(get_db)):
+    return await handle_request(delete_machine, machine_key=machine_key, db=db)
 
 @router.patch("/update/{machine_key}")
-async def update_machine_config_endpoint(machine_key:str, new_config:MachineConfig, db: AsyncSession = Depends(get_db)):
-    return await update_machine_config(machine_key=machine_key,new_config=new_config, db=db)
+async def update_machine_config_endpoint(machine_key: str, new_config: MachineConfig, db: AsyncSession = Depends(get_db)):
+    return await handle_request(update_machine_config, machine_key=machine_key, new_config=new_config, db=db)

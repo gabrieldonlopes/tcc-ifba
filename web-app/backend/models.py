@@ -15,12 +15,6 @@ class StateCleanliness(str, Enum):
     REGULAR = "REGULAR"
     URGENTE = "URGENTE"
 
-class Classes(str, Enum): # modificar para receber turmas na hora da configuração
-    PRIMEIROANO = "1º"
-    SEGUNDOANO =  "2º"
-    TERCEIROANO = "3º"
-    QUARTOANO = "4º"
-
 user_lab_association = Table(
     "user_lab_association",
     Base.metadata,
@@ -50,7 +44,7 @@ class Student(Base):
     student_id: Mapped[int] = mapped_column(Integer,primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     password_hash: Mapped[str] = mapped_column(String(255))  
-    class_var: Mapped[Classes] = mapped_column(SqlEnum(Classes))
+    class_var: Mapped[str] = mapped_column(String(50))
 
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student")
 
@@ -59,6 +53,8 @@ class Lab(Base):
 
     lab_id: Mapped[str] = mapped_column(String(10), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
+    classes: Mapped[str] = mapped_column(String(50))
+
     users: Mapped[list["User"]] = relationship(
         secondary=user_lab_association,
         back_populates="labs"
