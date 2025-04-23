@@ -44,7 +44,7 @@ class Student(Base):
     student_id: Mapped[int] = mapped_column(Integer,primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     password_hash: Mapped[str] = mapped_column(String(255))  
-    class_var: Mapped[str] = mapped_column(String(50))
+    class_var: Mapped[str] = mapped_column(String   (50))
 
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student")
 

@@ -42,7 +42,7 @@ class NewMachineConfig(MachineConfig):
 class LabCreate(BaseModel):
     lab_id: str
     name: str
-    classes: List[str]
+    classes: str
 
 class LabResponse(BaseModel):
     name: str

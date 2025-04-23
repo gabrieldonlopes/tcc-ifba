@@ -7,11 +7,7 @@ from sqlalchemy import or_
 
 from schemas import MachineConfig,NewMachineConfig
 from models import Machine, Lab
-
-async def verify_lab(lab_id: str, db: AsyncSession) -> bool:
-    lab_obj = await db.execute(select(Lab).filter(Lab.lab_id == lab_id))
-    existing_lab = lab_obj.scalars().first()
-    return True if existing_lab else False
+from config.lab_handler import verify_lab
 
 async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig:
     result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
@@ -41,22 +37,22 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
         ))    
     )
     new_machine.last_checked = datetime.strptime(new_machine.last_checked, "%d-%m-%Y")
-    if existing_machine.scalars().first() == None:
-        db_machine = Machine(
-            name=new_machine.name,
-            motherboard=new_machine.motherboard,
-            memory=new_machine.memory,
-            storage=new_machine.storage,
-            state_cleanliness=new_machine.state_cleanliness,
-            last_checked=new_machine.last_checked,
-            lab_id=new_machine.lab_id,
-            machine_key=new_machine.machine_key
-        )
-        db.add(db_machine)
-        await db.commit()
-        return {"message":"Configuração do computador registrada com Sucesso!"}
-    else:
+    if existing_machine.scalars().first():
         raise HTTPException(status_code=400,detail="Computador já registrado")
+        
+    db_machine = Machine(
+        name=new_machine.name,
+        motherboard=new_machine.motherboard,
+        memory=new_machine.memory,
+        storage=new_machine.storage,
+        state_cleanliness=new_machine.state_cleanliness,
+        last_checked=new_machine.last_checked,
+        lab_id=new_machine.lab_id,
+        machine_key=new_machine.machine_key
+    )
+    db.add(db_machine)
+    await db.commit()
+    return {"message":"Configuração do computador registrada com Sucesso!"}
 
 async def delete_machine(machine_key:str, db:AsyncSession):
     result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
