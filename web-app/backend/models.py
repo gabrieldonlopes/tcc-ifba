@@ -42,9 +42,9 @@ class Student(Base):
     __tablename__ = "Student"
 
     student_id: Mapped[int] = mapped_column(Integer,primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
+    student_name: Mapped[str] = mapped_column(String(100))
     password_hash: Mapped[str] = mapped_column(String(255))  
-    class_var: Mapped[str] = mapped_column(String   (50))
+    class_var: Mapped[str] = mapped_column(String(50))
 
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="student")
 
@@ -52,7 +52,7 @@ class Lab(Base):
     __tablename__ = "Lab"
 
     lab_id: Mapped[str] = mapped_column(String(10), primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
+    lab_name: Mapped[str] = mapped_column(String(100))
     classes: Mapped[str] = mapped_column(String(50))
 
     users: Mapped[list["User"]] = relationship(
@@ -66,7 +66,6 @@ class Session(Base):
 
     session_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     session_start: Mapped[datetime] = mapped_column(DateTime)
-    #session_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     machine_key: Mapped[str] = mapped_column(ForeignKey("Machine.machine_key"))
     machine: Mapped["Machine"] = relationship("Machine", back_populates="sessions")
@@ -74,15 +73,17 @@ class Session(Base):
     student_id: Mapped[int] = mapped_column(ForeignKey("Student.student_id"))
     student: Mapped["Student"] = relationship("Student", back_populates="sessions")
 
-
     @validates("session_start")
     def validate_session_start(self, key, value):
         if isinstance(value, str):
             try:
-                return datetime.strptime(value, "%H:%M:%S %d/%m/%Y")
+                return datetime.strptime(value, "%d/%m/%Y %H:%M:%S")  # data primeiro, formato padrão BR
             except ValueError as e:
-                raise ValueError("Invalid date") from e
-        return value
+                raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS") from e
+        elif isinstance(value, datetime):
+            return value
+        else:
+            raise TypeError("session_start deve ser datetime ou string no formato válido.")
 
 class User(Base):
     __tablename__ = "User"

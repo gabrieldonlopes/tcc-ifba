@@ -16,7 +16,7 @@ async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
         raise HTTPException(status_code=404,detail="Lab não foi encontrado")
     
     return LabResponse(
-        name=lab_obj.name,
+        lab_name=lab_obj.lab_name,
         classes=lab_obj.classes.split(",")
     )
 
@@ -27,7 +27,7 @@ async def create_lab(new_lab: LabCreate, db: AsyncSession):
     
     db_lab = Lab(
         lab_id=new_lab.lab_id,
-        name=new_lab.name,
+        lab_name=new_lab.lab_name,
         classes=new_lab.classes
     ) 
     db.add(db_lab)

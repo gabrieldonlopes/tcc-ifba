@@ -41,7 +41,7 @@ class NewMachineConfig(MachineConfig):
 
 class LabCreate(BaseModel):
     lab_id: str
-    name: str
+    lab_name: str
     classes: str
 
 class LabUpdate(BaseModel):
@@ -52,3 +52,21 @@ class LabResponse(BaseModel):
     name: str
     classes: List[str]
 
+class SessionCreate(BaseModel):
+    student_name: str
+    password: str
+    class_var: str
+    session_start: str  # Formato: DD-MM-AAAA HH:MM:SS
+
+    @field_validator('session_start')
+    def validate_datetime_format(cls, value):
+        try:
+            datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data/hora inválido. Use DD-MM-AAAA HH:MM:SS")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%d-%m-%Y %H:%M:%S") if v else None
+        }
