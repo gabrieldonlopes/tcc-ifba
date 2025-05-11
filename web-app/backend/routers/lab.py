@@ -5,7 +5,7 @@ from typing import Callable
 from sqlalchemy.ext.asyncio import AsyncSession 
 from database import get_db
 
-from schemas import LabCreate,LabResponse
+from schemas import LabCreate,LabResponse,LabUpdate
 from config.lab_handler import get_lab, create_lab, update_lab, delete_lab
 
 router = APIRouter()
@@ -31,7 +31,7 @@ async def create_lab_endpoint(new_lab: LabCreate, db: AsyncSession = Depends(get
     return await handle_request(create_lab, new_lab=new_lab, db=db)
 
 @router.patch("/update/{lab_id}")
-async def update_lab_endpoint(lab_id: str, new_lab: LabCreate, db: AsyncSession = Depends(get_db)):
+async def update_lab_endpoint(lab_id: str, new_lab: LabUpdate, db: AsyncSession = Depends(get_db)):
     return await handle_request(update_lab, lab_id=lab_id, new_lab=new_lab, db=db)
 
 @router.delete("/delete/{lab_id}")

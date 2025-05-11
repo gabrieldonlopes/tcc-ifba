@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List,Optional
 from pydantic import BaseModel, field_validator
 from models import StateCleanliness
 
@@ -43,6 +43,10 @@ class LabCreate(BaseModel):
     lab_id: str
     name: str
     classes: str
+
+class LabUpdate(BaseModel):
+    name: Optional[str] = None
+    classes: Optional[str] = None
 
 class LabResponse(BaseModel):
     name: str

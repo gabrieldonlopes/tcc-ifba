@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from database import create_tables
 
-from routers import machine_config
+from routers import machine_config,lab
 
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
@@ -40,6 +40,7 @@ def verify_key(api_key:str = Header(...)):
 
 #app.include_router(session.router, prefix="/session")
 app.include_router(machine_config.router, prefix="/machine_config", dependencies=[Depends(verify_key)])     
+app.include_router(lab.router, prefix="/lab", dependencies=[Depends(verify_key)])     
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 
-from schemas import LabCreate,LabResponse
+from schemas import LabCreate,LabResponse,LabUpdate
 from models import Lab
 
 async def verify_lab(lab_id: str, db: AsyncSession) -> Lab:
@@ -32,7 +32,7 @@ async def create_lab(new_lab: LabCreate, db: AsyncSession):
     ) 
     db.add(db_lab)
     await db.commit()
-    return {"message":"Lab criado com SucessoS"}
+    return {"message":"Lab criado com Sucesso"}
 
 async def delete_lab(lab_id: str, db: AsyncSession):
     result = await db.execute(select(Lab).filter(Lab.lab_id == lab_id))
@@ -46,24 +46,27 @@ async def delete_lab(lab_id: str, db: AsyncSession):
 
     return {"message":"Lab excluido com sucesso"}
 
-async def update_lab(lab_id: str, new_lab: LabCreate, db: AsyncSession):
-    lab_obj = await verify_lab(lab_id=lab_id,db=db)
+async def update_lab(lab_id: str, new_lab: LabUpdate, db: AsyncSession):
+    lab_obj = await verify_lab(lab_id=lab_id, db=db)
     if not lab_obj:
-        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
+        raise HTTPException(status_code=404, detail="Lab não foi encontrado")
     
     try: 
-        # utilizar getters e setters dinamicamente para alterar apenas se o valor não for
-        # vazio e se ele for diferente do que o já armazenado na db 
-        for field, new_value in new_lab.dict().items():
-            if new_value is not None:
-                current_value = getattr(lab_obj, field, None)
-                if new_value != current_value:
-                    setattr(lab_obj, field, new_value)
-        
-        await db.commit()
-        await db.refresh(lab_obj)
+        updated = False  # Flag para verificar se algo foi atualizado
 
-        return {"message":"Lab foi alterado com sucesso"}
+        for field, new_value in new_lab.dict(exclude_unset=True).items():
+            current_value = getattr(lab_obj, field, None)
+            if new_value and new_value != current_value:
+                setattr(lab_obj, field, new_value)
+                updated = True
+        
+        if updated:
+            await db.commit()
+            await db.refresh(lab_obj)
+        else:
+            return {"message": "Nenhum campo foi alterado."}
+
+        return {"message": "Lab foi alterado com sucesso", "lab": lab_obj}
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500,detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar Lab: {str(e)}")
