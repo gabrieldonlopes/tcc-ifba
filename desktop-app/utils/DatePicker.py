@@ -13,7 +13,7 @@ class DatePicker(ctk.CTkFrame):
         self.entry = ctk.CTkEntry(
             self, 
             width=120,
-            placeholder_text="DD-MM-AAAA",
+            placeholder_text="DD/MM/AAAA",
             font=ctk.CTkFont(size=12)
         )
         self.entry.pack(side="left", padx=(0, 5))
@@ -38,7 +38,7 @@ class DatePicker(ctk.CTkFrame):
         # Configuração do calendário
         cal = DateEntry(
             top,
-            date_pattern="dd-mm-yyyy",
+            date_pattern="dd/mm/yyyy",
             background="gray20",
             foreground="white",
             font=("Arial", 10)
@@ -68,7 +68,7 @@ class DatePicker(ctk.CTkFrame):
     def _set_date(self, date, window):
         self.selected_date = date
         self.entry.delete(0, "end")
-        self.entry.insert(0, date.strftime("%d-%m-%Y"))
+        self.entry.insert(0, date.strftime("%d/%m/%Y"))
         window.grab_release()
         window.destroy()
 

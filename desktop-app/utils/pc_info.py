@@ -3,7 +3,7 @@ from datetime import datetime
 
 def get_session_start():
     session_start = datetime.now()
-    return session_start.strftime("%H:%M:%S %d/%m/%Y")
+    return session_start.strftime("%d/%m/%Y %H:%M:%S")
 
 def get_pc_info():
     cpu_usage = psutil.cpu_percent(interval=1)

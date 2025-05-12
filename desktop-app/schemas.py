@@ -5,9 +5,9 @@ from enum import Enum
 
 def parse_last_checked_date(value: str) -> datetime:
     try:
-        return datetime.strptime(value, "%d-%m-%Y")
+        return datetime.strptime(value, "%d/%m/%Y")
     except ValueError:
-        raise ValueError("Formato inválido. Use DD-MM-YYYY")
+        raise ValueError("Formato inválido. Use DD/MM/YYYY")
     
 class StateCleanliness(str, Enum):
     BOM = "BOM"
@@ -35,17 +35,22 @@ class MachineConfig(BaseModel):
     memory: str
     storage: str
     state_cleanliness: StateCleanliness
-    last_checked: str  # Já está como string
+    last_checked: str  # String no formato DD/MM/AAAA
     lab_id: str
 
-    @field_validator('state_cleanliness', mode='before')
-    def validate_clean_state(cls, value):
-        if isinstance(value, str):
-            try:
-                return StateCleanliness(value)
-            except ValueError:
-                raise ValueError(f"Estado inválido. Use: {[e.value for e in StateCleanliness]}")
-        return value
+    @field_validator('last_checked')
+    def validate_date_format(cls, value):
+        try:
+            datetime.strptime(value, "%d/%m/%Y")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use DD/MM/AAAA")
+
+    class Config:
+        json_encoders = {
+            StateCleanliness: lambda v: v.value,
+            datetime: lambda v: v.strftime("%d/%m/%Y") if v else None
+        }
    
         
 class NewMachineConfig(MachineConfig):

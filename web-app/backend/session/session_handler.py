@@ -1,62 +1,13 @@
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
+from typing import List
 
-from models import Machine, Session, Student
-from schemas import SessionCreate  # <- modelo Pydantic para entrada de dados
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-async def get_student(name: str, class_var: str, db: AsyncSession) -> Student | None:
-    result = await db.execute(select(Student).filter(Student.student_name == name.lower()))
-    student_obj = result.scalars().first()
-    
-    if student_obj.student_name == name.lower() and student_obj.class_var == class_var:
-        return student_obj
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário, classe ou senha incorretos.",
-        )
-
-async def register_student(name: str, password: str, class_var: str, db: AsyncSession) -> Student:    
-    hashed_password = get_password_hash(password)
-    db_student = Student(
-        student_name=name.lower(),
-        password_hash=hashed_password,
-        class_var=class_var,
-    )
-    try:
-        db.add(db_student)
-        await db.commit()
-        await db.refresh(db_student)
-    except IntegrityError:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Erro ao criar estudante. Tente novamente.",
-        )
-    return db_student
-
-async def verify_student(student_name: str, password: str, class_var: str, db: AsyncSession) -> Student:
-    student_obj = await get_student(name=student_name, class_var=class_var, db=db)
-    if student_obj:
-        if not verify_password(password, student_obj.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Usuário, classe ou senha incorretos.",
-            )
-        return student_obj
-    else:
-        return await register_student(name=student_name, password=password, class_var=class_var, db=db)
+from models import Machine, Session
+from schemas import SessionCreate,SessionResponse,StudentResponse  # <- modelo Pydantic para entrada de dados
+from student.student_handler import verify_student
 
 async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSession):
     # Verifica se a máquina existe
@@ -95,3 +46,77 @@ async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSe
         )
 
     return {"message":"Sessao registrada com Sucesso"}
+
+async def get_sessions_for_lab(lab_id: str, db:AsyncSession) -> List[SessionResponse]:
+    result = await db.execute(
+        select(Session).where(Session.lab_id == lab_id).options(
+            selectinload(Session.student),
+            selectinload(Session.machine),
+        )
+    )
+    sessions = result.scalars().all()
+
+    if not sessions:
+        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada.")
+
+    return [
+        SessionResponse(
+            session_start=s.session_start.strftime("%d/%m/%Y %H:%M:%S"),
+            student=StudentResponse(
+                student_name=s.student.student_name,
+                class_var=s.student.class_var,
+            ),
+            machine_name=s.machine.name
+        )
+        for s in sessions
+    ]
+
+async def get_sessions_for_student(student_id: int, db: AsyncSession) -> List[SessionResponse]:
+    result = await db.execute(
+        select(Session).where(Session.student_id == student_id).options(
+            selectinload(Session.student),
+            selectinload(Session.machine),
+        )
+    )
+    sessions = result.scalars().all()
+
+    if not sessions:
+        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada para o estudante.")
+
+    return [
+        SessionResponse(
+            session_start=s.session_start.strftime("%d/%m/%Y %H:%M:%S"),
+            student=StudentResponse(
+                student_name=s.student.student_name,
+                class_var=s.student.class_var,
+            ),
+            machine_name=s.machine.name
+        )
+        for s in sessions
+    ]
+
+
+async def get_sessions_for_machine(machine_key: str, db: AsyncSession) -> List[SessionResponse]:
+    result = await db.execute(
+        select(Session).where(Session.machine_key == machine_key).options(
+            selectinload(Session.student),
+            selectinload(Session.machine),
+        )
+    )
+    sessions = result.scalars().all()
+
+    if not sessions:
+        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada para esta máquina.")
+
+    return [
+        SessionResponse(
+            session_start=s.session_start.strftime("%d/%m/%Y %H:%M:%S"),
+            student=StudentResponse(
+                student_name=s.student.student_name,
+                class_var=s.student.class_var,
+            ),
+            machine_name=s.machine.name
+        )
+        for s in sessions
+    ]
+

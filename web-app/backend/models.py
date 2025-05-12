@@ -37,6 +37,17 @@ class Machine(Base):
     lab: Mapped["Lab"] = relationship("Lab", back_populates="machines")
     
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="machine")
+    @validates("last_checked")
+    def validate_session_start(self, key, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, "%d/%m/%Y")
+            except ValueError as e:
+                raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA") from e
+        elif isinstance(value, datetime):
+            return value
+        else:
+            raise TypeError("last_checked deve ser datetime ou string no formato válido.")
     
 class Student(Base):
     __tablename__ = "Student"
@@ -60,6 +71,8 @@ class Lab(Base):
         back_populates="labs"
     )
     machines: Mapped[list["Machine"]] = relationship("Machine", back_populates="lab")
+    sessions: Mapped[list["Session"]] = relationship("Session", back_populates="lab")
+
 
 class Session(Base):
     __tablename__ = "Session"
@@ -73,11 +86,14 @@ class Session(Base):
     student_id: Mapped[int] = mapped_column(ForeignKey("Student.student_id"))
     student: Mapped["Student"] = relationship("Student", back_populates="sessions")
 
+    lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))
+    lab: Mapped["Lab"] = relationship("Lab", back_populates="sessions")
+
     @validates("session_start")
     def validate_session_start(self, key, value):
         if isinstance(value, str):
             try:
-                return datetime.strptime(value, "%d/%m/%Y %H:%M:%S")  # data primeiro, formato padrão BR
+                return datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
             except ValueError as e:
                 raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS") from e
         elif isinstance(value, datetime):
