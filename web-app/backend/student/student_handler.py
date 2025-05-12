@@ -57,5 +57,7 @@ async def verify_student(student_name: str, password: str, class_var: str, db: A
                 detail="Usuário, classe ou senha incorretos.",
             )
         return student_obj
-    else:
+    else:    
         return await register_student(student_name=student_name, password=password, class_var=class_var, db=db)
+    
+    

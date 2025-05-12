@@ -14,6 +14,10 @@ async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSe
     machine_result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
     machine_config_obj = machine_result.scalars().first()
 
+    # para debug
+    #for name, field in session.model_dump().items():
+    #    print(f"{name}: {field}")
+
     if not machine_config_obj:
         raise HTTPException(status_code=404, detail="Computador não foi encontrado.")
     
@@ -31,9 +35,10 @@ async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSe
     db_session = Session(
         session_start=session.session_start,
         machine_key=machine_key,
-        student_id=student_obj.student_id
+        student_id=student_obj.student_id,
+        lab_id=machine_config_obj.lab_id
     )
-
+    
     try:
         db.add(db_session)
         await db.commit()
@@ -46,6 +51,7 @@ async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSe
         )
 
     return {"message":"Sessao registrada com Sucesso"}
+
 
 async def get_sessions_for_lab(lab_id: str, db:AsyncSession) -> List[SessionResponse]:
     result = await db.execute(
