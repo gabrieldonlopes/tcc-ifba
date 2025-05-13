@@ -22,7 +22,7 @@ class MachineConfig(BaseModel):
     last_checked: str  # String no formato DD/MM/AAAA
     lab_id: str
 
-    @field_validator('last_checked')
+    @field_validator('last_checked',mode='before')
     def validate_date_format(cls, value):
         try:
             datetime.strptime(value, "%d/%m/%Y")
@@ -62,6 +62,11 @@ class SessionCreate(BaseModel):
     password: str
     class_var: str
     session_start: str  # Formato: DD/MM/AAAA HH:MM:SS
+    # métricas do sistema
+    cpu_usage: float
+    ram_usage: float
+    cpu_temp: float
+    lab_id: str
 
     @field_validator('session_start')
     def validate_datetime_format(cls, value):
@@ -77,9 +82,15 @@ class SessionCreate(BaseModel):
         }
 
 class SessionResponse(BaseModel):
-    session_start: str
-    student: StudentResponse
-    machine_name: str
+    student_name: str
+    class_var: str
+    session_start: str  # Formato: DD/MM/AAAA HH:MM:SS
+    # métricas do sistema
+    cpu_usage: float
+    ram_usage: float
+    cpu_temp: float
+    machine_name:str
+    lab_name: str
 
     @field_validator('session_start')
     def validate_datetime_format(cls, value):

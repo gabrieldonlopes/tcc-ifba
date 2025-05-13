@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Boolean, Date, DateTime, ForeignKey, Table, Column
+from sqlalchemy import Integer,Float, String, Boolean, Date, DateTime, ForeignKey, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column,relationship, DeclarativeBase, validates
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
@@ -89,6 +89,8 @@ class Session(Base):
     lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))
     lab: Mapped["Lab"] = relationship("Lab", back_populates="sessions")
 
+    system_metrics: Mapped["SystemMetrics"] = relationship("SystemMetrics", uselist=False, back_populates="session")
+
     @validates("session_start")
     def validate_session_start(self, key, value):
         if isinstance(value, str):
@@ -100,6 +102,18 @@ class Session(Base):
             return value
         else:
             raise TypeError("session_start deve ser datetime ou string no formato válido.")
+
+class SystemMetrics(Base):
+    __tablename__ = "SystemMetrics"
+
+    metrics_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cpu_usage: Mapped[float] = mapped_column(Float)
+    ram_usage: Mapped[float] = mapped_column(Float)
+    cpu_temp: Mapped[float] = mapped_column(Float)
+    session_id: Mapped[int] = mapped_column(ForeignKey("Session.session_id"))
+
+    # Relacionamento com a tabela Session
+    session: Mapped["Session"] = relationship("Session", back_populates="system_metrics")
 
 class User(Base):
     __tablename__ = "User"
