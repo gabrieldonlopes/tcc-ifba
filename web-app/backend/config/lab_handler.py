@@ -1,8 +1,10 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
-from schemas import LabCreate,LabResponse,LabUpdate
+from typing import List
+from schemas import LabCreate,LabResponse,LabUpdate,MachineConfig
 from models import Lab
 
 async def verify_lab(lab_id: str, db: AsyncSession) -> Lab:
@@ -70,3 +72,29 @@ async def update_lab(lab_id: str, new_lab: LabUpdate, db: AsyncSession):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar Lab: {str(e)}")
+
+async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfig]:
+    result = await db.execute(
+        select(Lab).where(Lab.lab_id==lab_id).options(
+            selectinload(Lab.machines)
+        )
+    )
+    lab = result.scalars().first()
+    if not lab:
+        raise HTTPException(status_code=404, detail="Lab não foi encontrado")
+    if lab.machines==None:
+        raise HTTPException(status_code=404, detail="Nenhuma máquina foi encontrada")
+
+    return [
+        MachineConfig(
+            motherboard=m.motherboard,
+            name=m.name,
+            memory=m.memory,
+            storage=m.storage,
+            state_cleanliness=m.state_cleanliness,
+            last_checked=m.last_checked.strftime("%d/%m/%Y"),
+            lab_id=lab_id
+        )
+        for m in lab.machines
+    ]
+
