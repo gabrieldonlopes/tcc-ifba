@@ -5,18 +5,26 @@ import asyncio
 
 from pydantic import ValidationError
 from schemas import MachineConfig,StateCleanliness
-from config import get_config,post_config_from_ui
+from config import get_machine_config,post_config_from_ui
 from utils.DatePicker import DatePicker
+import threading
 
 class ConfigMachineTemplate:
     def __init__(self, parent_window=None):
         self.parent = parent_window
         self.root = ctk.CTkToplevel()
         self._init_window()
-        
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._load_configurations())
+
+        # Cria um event loop em thread separada
+        self.loop = asyncio.new_event_loop()
+        threading.Thread(target=self._start_loop, daemon=True).start()
+
+        # Usa o loop para rodar as tarefas assíncronas
+        asyncio.run_coroutine_threadsafe(self._load_configurations(), self.loop)
+
+    def _start_loop(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
 
     def _init_window(self):
         self.root.title("Configuração da Máquina")
@@ -34,10 +42,10 @@ class ConfigMachineTemplate:
 
     async def _load_configurations(self):
         try:
-            config_data = await get_config()
+            config_data = await get_machine_config()
             
             self.loading_label.destroy()
-            self._build_ui()
+            await self._build_ui()
             
             if config_data:
                 self._fill_form_fields(config_data)
@@ -64,7 +72,7 @@ class ConfigMachineTemplate:
             self.date_picker.entry.delete(0, "end")
             self.date_picker.entry.insert(0, config.last_checked)    
 
-    def _build_ui(self):
+    async def _build_ui(self):
         # Frame principal
         main_frame = ctk.CTkFrame(self.root)
         main_frame.pack(pady=20, padx=20, fill="both", expand=True)
@@ -150,7 +158,7 @@ class ConfigMachineTemplate:
         ctk.CTkButton(
             btn_frame,
             text="Salvar",
-            command=self._handle_save,
+            command=lambda: asyncio.run_coroutine_threadsafe(self._handle_save(), self.loop), # handle_save depende de duas operações async 
             fg_color="#2E8B57",  # Verde
             hover_color="#3CB371",
             **btn_style
@@ -165,11 +173,11 @@ class ConfigMachineTemplate:
             **btn_style
         ).pack(side="right", padx=15)
 
-    def _handle_save(self):
+    async def _handle_save(self):
         try:
             data = {
                 "motherboard": self.motherboard_entry.get().strip(),
-                "name": self.name_entry.get().strip(),
+                "machine_name": self.name_entry.get().strip(),
                 "memory": self.memory_entry.get().strip(),
                 "storage": self.storage_entry.get().strip(),
                 "state_cleanliness": self.clean_state_combobox.get(), 
@@ -184,7 +192,7 @@ class ConfigMachineTemplate:
             if not self.date_picker.get_date_string():
                 raise ValueError("Selecione uma data válida")
 
-            success, message = post_config_from_ui(data)
+            success, message = await post_config_from_ui(data)
             if success:
                 messagebox.showinfo("Sucesso", message)
                 self.close()
@@ -211,3 +219,6 @@ class ConfigMachineTemplate:
         if self.parent:
             self.parent.deiconify()
         self.root.destroy()
+    
+    def run(self):
+        self.root.mainloop()

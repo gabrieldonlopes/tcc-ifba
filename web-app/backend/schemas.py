@@ -14,7 +14,7 @@ class PcInfo(BaseModel):
     cpu_temp: float
 
 class MachineConfig(BaseModel):
-    name: str
+    machine_name: str
     motherboard: str
     memory: str
     storage: str

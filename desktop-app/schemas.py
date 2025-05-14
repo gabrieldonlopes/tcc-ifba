@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_serializer, field_validator
 from datetime import datetime
-from typing import Annotated
+from typing import List
 from enum import Enum
 
 def parse_last_checked_date(value: str) -> datetime:
@@ -14,23 +14,49 @@ class StateCleanliness(str, Enum):
     REGULAR = "REGULAR"
     URGENTE = "URGENTE"
 
-class User(BaseModel): # usada para login do estudante
-    name: str
+class StudentResponse(BaseModel):
+    student_name: str
     class_var: str
-    password: str
 
-class PcInfo(BaseModel): # informações do computador no momento de login
+class SessionCreate(BaseModel):
+    student_name: str
+    password: str
+    class_var: str
+    session_start: str  # Formato: DD/MM/AAAA HH:MM:SS
+    # métricas do sistema
+    cpu_usage: float
+    ram_usage: float
+    cpu_temp: float
+    lab_id: str
+
+    @field_validator('session_start')
+    def validate_datetime_format(cls, value):
+        try:
+            datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S") if v else None
+        }
+
+class SessionResponse(SessionCreate):
+    machine_name:str
+    lab_name:str
+
+class PcInfo(BaseModel):
     cpu_usage: float
     ram_usage: float
     cpu_temp: float
 
-class Session(BaseModel):
-    session_start: str
-    user: User
-    pc_info: PcInfo
+class LabInfo(BaseModel):
+    lab_name: str
+    classes: List[str]
 
 class MachineConfig(BaseModel):
-    name: str
+    machine_name: str
     motherboard: str
     memory: str
     storage: str
@@ -52,6 +78,12 @@ class MachineConfig(BaseModel):
             datetime: lambda v: v.strftime("%d/%m/%Y") if v else None
         }
    
-        
 class NewMachineConfig(MachineConfig):
     machine_key: str
+
+# model utilizado para guardar as informações 
+class LocalConfig(BaseModel):
+    machine_key: str
+    machine_name: str
+    lab_name:str
+    classes:List[str]

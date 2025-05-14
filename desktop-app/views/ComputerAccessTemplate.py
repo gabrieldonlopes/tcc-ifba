@@ -1,13 +1,16 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from api import post_user, get_all_sessions
-from utils.data_handler import verify_user
+
+from config import get_local_config
+from api import post_session, get_all_sessions
 from views.SessionViewTemplate import SessionViewTemplate
 
 class ComputerAccessTemplate:
-    def __init__(self):
-        self.COMPUTER_NAME = "ifba01" 
-        self.CLASS_LIST = ["1ano", "2ano", "3ano"]
+    def __init__(self,machine_name,classes,lab_name):
+
+        self.COMPUTER_NAME = machine_name
+        self.CLASS_LIST = classes
+        self.LAB_NAME = lab_name
         self.allow_close = False
         self.session_view = None
 
@@ -35,7 +38,7 @@ class ComputerAccessTemplate:
         # Título
         title = ctk.CTkLabel(
             main_frame, 
-            text=f"Acesso ao Computador {self.COMPUTER_NAME}", 
+            text=f"Acesso ao Computador {self.COMPUTER_NAME} do laboratório {self.LAB_NAME}", 
             font=ctk.CTkFont(size=18, weight="bold")
         )
         title.pack(pady=(10, 20))
@@ -98,11 +101,11 @@ class ComputerAccessTemplate:
 
     def _handle_login(self):
         name = self.name_entry.get().strip()
-        class_name = self.class_var.get()
+        class_var = self.class_var.get()
         password = self.password_entry.get()
 
         # Login de administrador
-        if name == "admin" and password == "admin" and class_name == "Selecione sua turma":
+        if name == "admin" and password == "admin" and class_var == "Selecione sua turma":
             self.allow_close = True
             try:
                 data = get_all_sessions()
@@ -113,13 +116,13 @@ class ComputerAccessTemplate:
             return
 
         # Validação dos campos
-        if not name or not password or class_name == "Selecione sua turma":
+        if not name or not password or class_var == "Selecione sua turma":
             messagebox.showwarning("Atenção", "Por favor, preencha todos os campos.")
             return
 
         try:
-            user = verify_user(name, class_name, password)  # Modificado para usar senha
-            post_user(user)
+         #   user = verify_user(name, class_name, password)  # Modificado para usar senha
+            post_session(student_name=name,password=password,class_var=class_var)
             self.allow_close = True
             self._close_window()
         except Exception as e:
