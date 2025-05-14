@@ -88,7 +88,7 @@ async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfig
     return [
         MachineConfigResponse(
             machine_key=m.machine_key,
-            name=m.name,
+            machine_name=m.machine_name,
             state_cleanliness=m.state_cleanliness,
             last_checked=m.last_checked.strftime("%d/%m/%Y"),
         )

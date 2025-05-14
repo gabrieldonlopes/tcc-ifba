@@ -33,7 +33,7 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
     existing_machine = await db.execute(
         select(Machine).where(or_(
             Machine.machine_key == new_machine.machine_key,
-            Machine.name == new_machine.machine_name
+            Machine.machine_name == new_machine.machine_name
         ))    
     )
     new_machine.last_checked = datetime.strptime(new_machine.last_checked, "%d/%m/%Y")
@@ -41,7 +41,7 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
         raise HTTPException(status_code=400,detail="Computador já registrado")
         
     db_machine = Machine(
-        name=new_machine.machine_name,
+        machine_name=new_machine.machine_name,
         motherboard=new_machine.motherboard,
         memory=new_machine.memory,
         storage=new_machine.storage,

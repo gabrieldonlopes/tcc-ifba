@@ -70,7 +70,7 @@ async def get_sessions_for_machine() -> List[SessionResponse]:
                                 student_name=s.student.student_name,
                                 class_var=s.student.class_var,
                             ),
-                            machine_name=s.machine.name
+                            machine_name=s.machine.machine_name
                         )
                         for s in data
                     ]

@@ -93,7 +93,7 @@ async def get_sessions_for_lab(lab_id: str, db: AsyncSession) -> List[SessionRes
             cpu_usage=s.system_metrics.cpu_usage if s.system_metrics else None,  # Acessando as métricas associadas
             ram_usage=s.system_metrics.ram_usage if s.system_metrics else None,
             cpu_temp=s.system_metrics.cpu_temp if s.system_metrics else None,
-            machine_name=s.machine.name,
+            machine_name=s.machine.machine_name,
             lab_name=lab_obj.lab_name  # Acessando o nome do laboratório
         )
         for s in sessions
@@ -130,7 +130,7 @@ async def get_sessions_for_student(student_id: int, db: AsyncSession) -> List[Se
             cpu_usage=s.system_metrics.cpu_usage if s.system_metrics else None,  # Adicionando as métricas
             ram_usage=s.system_metrics.ram_usage if s.system_metrics else None,
             cpu_temp=s.system_metrics.cpu_temp if s.system_metrics else None,
-            machine_name=s.machine.name,
+            machine_name=s.machine.machine_name,
             lab_name=s.lab.lab_name  # Nome do laboratório associado à sessão
         )
         for s in sessions
@@ -167,7 +167,7 @@ async def get_sessions_for_machine(machine_key: str, db: AsyncSession) -> List[S
             cpu_usage=s.system_metrics.cpu_usage,  # Adicionando as métricas
             ram_usage=s.system_metrics.ram_usage, 
             cpu_temp=s.system_metrics.cpu_temp,
-            machine_name=machine_obj.name,
+            machine_name=machine_obj.machine_name,
             lab_name=s.lab.lab_name  # Nome do laboratório associado à sessão
         )
         for s in sessions
