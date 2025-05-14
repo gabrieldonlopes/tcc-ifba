@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from typing import List
-from schemas import LabCreate,LabResponse,LabUpdate,MachineConfig
+from schemas import LabCreate,LabResponse,LabUpdate,MachineConfigResponse
 from models import Lab
 
 async def verify_lab(lab_id: str, db: AsyncSession) -> Lab:
@@ -73,7 +73,7 @@ async def update_lab(lab_id: str, new_lab: LabUpdate, db: AsyncSession):
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar Lab: {str(e)}")
 
-async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfig]:
+async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfigResponse]:
     result = await db.execute(
         select(Lab).where(Lab.lab_id==lab_id).options(
             selectinload(Lab.machines)
@@ -86,14 +86,11 @@ async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfig
         raise HTTPException(status_code=404, detail="Nenhuma máquina foi encontrada")
 
     return [
-        MachineConfig(
-            motherboard=m.motherboard,
+        MachineConfigResponse(
+            machine_key=m.machine_key,
             name=m.name,
-            memory=m.memory,
-            storage=m.storage,
             state_cleanliness=m.state_cleanliness,
             last_checked=m.last_checked.strftime("%d/%m/%Y"),
-            lab_id=lab_id
         )
         for m in lab.machines
     ]

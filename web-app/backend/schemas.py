@@ -39,6 +39,25 @@ class MachineConfig(BaseModel):
 class NewMachineConfig(MachineConfig):
     machine_key: str    
 
+class MachineConfigResponse(BaseModel):
+    machine_key: str
+    name: str
+    state_cleanliness: StateCleanliness
+    last_checked: str  # String no formato DD/MM/AAAA
+    
+    @field_validator('last_checked',mode='before')
+    def validate_date_format(cls, value):
+        try:
+            datetime.strptime(value, "%d/%m/%Y")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use DD/MM/AAAA")
+
+    class Config:
+        json_encoders = {
+            StateCleanliness: lambda v: v.value,
+            datetime: lambda v: v.strftime("%d/%m/%Y") if v else None
+        }
 
 class LabCreate(BaseModel):
     lab_id: str
