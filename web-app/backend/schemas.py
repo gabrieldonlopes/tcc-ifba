@@ -3,10 +3,30 @@ from typing import List,Optional
 from pydantic import BaseModel, field_validator
 from models import StateCleanliness
 
-class User(BaseModel):
-    name: str
-    class_var: str
+# Authentication Schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
     password: str
+
+class UserResponse(BaseModel):
+    user_id: int
+    username: str
+    email: str | None = None
+    class Config:
+        from_attributes = True
+
+class UserInDB(UserResponse):
+    hashed_password: str
 
 class PcInfo(BaseModel):
     cpu_usage: float

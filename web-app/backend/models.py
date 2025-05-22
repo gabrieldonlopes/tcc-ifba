@@ -120,7 +120,8 @@ class User(Base):
 
     user_id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255))  
+    email: Mapped[str] = mapped_column(String(100), unique=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))  
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     labs: Mapped[list["Lab"]] = relationship(
