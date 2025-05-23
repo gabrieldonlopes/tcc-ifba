@@ -15,8 +15,8 @@ from auth.auth_handler import (
 from database import get_db
 from schemas import Token, UserCreate, UserResponse
 from models import User
-
 router = APIRouter()
+
 
 @router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate, db: Session = Depends(get_db)):

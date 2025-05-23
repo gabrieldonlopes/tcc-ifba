@@ -50,7 +50,6 @@ async def get_user_by_id(db: AsyncSession, user_id: int):
 
     return user_response
 
-
 async def authenticate_user(db: AsyncSession, username: str, password: str):
     user = await get_user(db, username)
     if not user:

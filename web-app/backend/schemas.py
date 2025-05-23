@@ -92,6 +92,9 @@ class LabResponse(BaseModel):
     lab_name: str
     classes: List[str]
 
+class LabResponseUser(LabResponse):
+    lab_id: str
+
 class StudentResponse(BaseModel):
     student_name: str
     class_var: str
