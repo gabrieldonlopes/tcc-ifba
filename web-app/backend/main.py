@@ -19,16 +19,16 @@ WEB_API_KEY = os.getenv("WEB_API_KEY")
 app = FastAPI(debug=True)
 
 origins = [
-    # adicionar link do servidor npm
+    "http://localhost:5173",
 ]
 
-#app.add_middleware( # serve para restringir o acesso da API
-#    CORSMiddleware,
-#    allow_origins=origins,
-#    allow_credentials=True,
-#    allow_methods=["*"],
-#    allow_headers=["*"],
-#)
+app.add_middleware( # serve para restringir o acesso da API
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 async def initialize_db(create_db: bool): # verifica se a db existe
     if create_db:
