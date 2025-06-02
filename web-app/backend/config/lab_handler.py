@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import or_
 
 from typing import List
 from schemas import (
@@ -36,9 +37,15 @@ async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
         classes=lab_obj.classes.split(",")
     )
 
-#TODO: adicionar tratamento de erro mais especifíco
 async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):
-    lab_obj = await verify_lab(lab_id=new_lab.lab_id,db=db)
+    result = await db.execute(select(Lab).where(
+        or_(
+            Lab.lab_id == new_lab.lab_id,
+            Lab.lab_name == new_lab.lab_name
+    )))
+
+    lab_obj = result.scalars().first()
+    
     if lab_obj:
         raise HTTPException(status_code=400,detail="Lab já registrado")
     
@@ -52,16 +59,12 @@ async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):
     
     db.add(db_lab)
     await db.commit()
-
+    await db.refresh(db_lab)
     
     return {"message":"Lab criado com Sucesso"}
 
-async def delete_lab(lab_id: str, db: AsyncSession):
-    result = await db.execute(select(Lab).filter(Lab.lab_id == lab_id))
-    lab_obj = result.scalars().first()
-
-    if not lab_obj:
-        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
+async def delete_lab(lab_id: str, db: AsyncSession,user:User):
+    lab_obj = await verify_lab(lab_id=lab_id,db=db,user=user)
 
     await db.delete(lab_obj)
     await db.commit()
@@ -86,7 +89,7 @@ async def update_lab(lab_id: str, new_lab: LabUpdate,user:User, db: AsyncSession
         else:
             return {"message": "Nenhum campo foi alterado."}
 
-        return {"message": "Lab foi alterado com sucesso", "lab": lab_obj}
+        return {"message": "Lab foi alterado com sucesso"}
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar Lab: {str(e)}")
