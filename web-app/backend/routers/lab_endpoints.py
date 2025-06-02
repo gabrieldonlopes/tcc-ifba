@@ -35,8 +35,8 @@ async def create_lab_endpoint(new_lab: LabCreate,user: User = Depends(get_curren
     return await handle_request(create_lab,user=user, new_lab=new_lab, db=db)
 
 @router.patch("/update/{lab_id}")
-async def update_lab_endpoint(lab_id: str, new_lab: LabUpdate, db: AsyncSession = Depends(get_db)):
-    return await handle_request(update_lab, lab_id=lab_id, new_lab=new_lab, db=db)
+async def update_lab_endpoint(lab_id: str, new_lab: LabUpdate,user: User = Depends(get_current_active_user),db: AsyncSession = Depends(get_db)):
+    return await handle_request(update_lab, lab_id=lab_id, new_lab=new_lab, user=user,db=db)
 
 @router.delete("/delete/{lab_id}")
 async def delete_lab_endpoint(lab_id: str, db: AsyncSession = Depends(get_db)):

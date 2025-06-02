@@ -9,15 +9,27 @@ from schemas import (
 )
 from models import Lab,User
 
-async def verify_lab(lab_id: str, db: AsyncSession) -> Lab:
-    lab_obj = await db.execute(select(Lab).filter(Lab.lab_id == lab_id))
+async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
+    if user is not None:
+        lab_obj = await db.execute(
+            select(Lab).where(Lab.lab_id == lab_id).options(
+                selectinload(Lab.users)
+            ))
+        existing_lab = lab_obj.scalars().first()
+        if not existing_lab:
+            raise HTTPException(status_code=404,detail="Lab não foi encontrado")
+        if user not in existing_lab.users:
+            raise HTTPException(status_code=404,detail="Operação não autorizada")
+    
+    lab_obj = await db.execute(select(Lab).where(Lab.lab_id == lab_id))
     existing_lab = lab_obj.scalars().first()
+    if not existing_lab:
+        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
+
     return existing_lab
 
 async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
     lab_obj = await verify_lab(lab_id=lab_id,db=db)
-    if not lab_obj:
-        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
     
     return LabResponse(
         lab_name=lab_obj.lab_name,
@@ -56,11 +68,9 @@ async def delete_lab(lab_id: str, db: AsyncSession):
 
     return {"message":"Lab excluido com sucesso"}
 
-async def update_lab(lab_id: str, new_lab: LabUpdate, db: AsyncSession):
-    lab_obj = await verify_lab(lab_id=lab_id, db=db)
-    if not lab_obj:
-        raise HTTPException(status_code=404, detail="Lab não foi encontrado")
-    
+async def update_lab(lab_id: str, new_lab: LabUpdate,user:User, db: AsyncSession):
+    lab_obj = await verify_lab(lab_id=lab_id, db=db,user=user)
+
     try: 
         updated = False  # Flag para verificar se algo foi atualizado
 
