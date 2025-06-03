@@ -6,11 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from typing import List
 
-from schemas import LabCreate,LabResponse,LabUpdate,MachineConfigResponse
+from schemas import LabCreate,LabResponse,LabUpdate,MachineConfigResponse,UserResponse
 from models import User
 from auth.auth_handler import get_current_active_user
 from config.lab_handler import (
-    get_lab, create_lab, update_lab, delete_lab,get_machines_for_lab
+    get_lab, create_lab, update_lab, delete_lab,join_lab,get_machines_for_lab,get_users_for_lab
 )
 router = APIRouter()
 
@@ -38,6 +38,10 @@ async def create_lab_endpoint(new_lab: LabCreate,user: User = Depends(get_curren
 async def update_lab_endpoint(lab_id: str, new_lab: LabUpdate,user: User = Depends(get_current_active_user),db: AsyncSession = Depends(get_db)):
     return await handle_request(update_lab, lab_id=lab_id, new_lab=new_lab, user=user,db=db)
 
+@router.post("/{lab_id}/join")
+async def join_lab_endpoint(lab_id:str,user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
+    return await handle_request(join_lab,lab_id=lab_id,user=user,db=db)
+
 @router.delete("/delete/{lab_id}")
 async def delete_lab_endpoint(lab_id: str,user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     return await handle_request(delete_lab, lab_id=lab_id, db=db,user=user)
@@ -45,3 +49,7 @@ async def delete_lab_endpoint(lab_id: str,user: User = Depends(get_current_activ
 @router.get("/{lab_id}/machines/", response_model=List[MachineConfigResponse])
 async def get_machines_for_lab_endpoint(lab_id:str,db: AsyncSession = Depends(get_db)):
     return await handle_request(get_machines_for_lab,lab_id=lab_id,db=db)
+
+@router.get("/{lab_id}/users/", response_model=List[UserResponse])
+async def get_users_for_lab_endpoint(lab_id:str,db: AsyncSession = Depends(get_db)):
+    return await handle_request(get_users_for_lab,lab_id=lab_id,db=db)

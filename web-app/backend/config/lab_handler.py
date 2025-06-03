@@ -94,6 +94,23 @@ async def update_lab(lab_id: str, new_lab: LabUpdate,user:User, db: AsyncSession
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar Lab: {str(e)}")
 
+async def join_lab(lab_id:str,user:User,db:AsyncSession):
+    lab_obj = await db.execute(
+        select(Lab).where(Lab.lab_id == lab_id).options(
+            selectinload(Lab.users)
+        ))
+    existing_lab = lab_obj.scalars().first()
+    if not existing_lab:
+        raise HTTPException(status_code=404,detail="Lab não foi encontrado")
+    if user in existing_lab.users:
+        raise HTTPException(status_code=409,detail="Você já está neste lab")
+
+    existing_lab.users.append(user)
+    await db.commit()
+    await db.refresh(existing_lab)
+
+    return {"message": "Você entrou no lab com sucesso"}
+
 async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfigResponse]:
     result = await db.execute(
         select(Lab).where(Lab.lab_id==lab_id).options(

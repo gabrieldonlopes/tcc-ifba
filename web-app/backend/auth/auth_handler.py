@@ -41,7 +41,7 @@ async def get_user_by_id(db: AsyncSession, user_id: int):
     result = await db.execute(select(User).filter(User.user_id == user_id))
     user = result.scalars().first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     user_response = UserResponse(
         user_id=user.user_id,
         username=user.username,
