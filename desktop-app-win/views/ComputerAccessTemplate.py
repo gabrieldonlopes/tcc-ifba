@@ -20,7 +20,7 @@ class ComputerAccessTemplate:
     def _init_window(self):
         self.root.title("Login")
         self.root.resizable(False, False)
-        ctk.set_appearance_mode("dark")
+        ctk.set_appearance_mode("system")
         ctk.set_default_color_theme("blue")
         
         self.root.attributes('-topmost', True)

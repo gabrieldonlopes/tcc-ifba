@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = "http://192.168.0.131:8000";
+const API_URL = "http://localhost:8000";
 const API_KEY = "4de3df2d3c9df240127d7e21d31fbed13e5bf22fde0e010bd3999a260d5be333";
 
 const defaultHeaders = {

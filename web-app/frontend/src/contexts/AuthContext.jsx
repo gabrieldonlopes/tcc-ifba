@@ -28,18 +28,17 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('token', response.access_token);
                 const userProfile = await fetchUserProfile(response.access_token);
                 setUser(userProfile);
-                //navigate('/search');
+                navigate('/labs');
             }
         } catch (error) {
             toast.error(error.message);
         }
-        
     };
 
     const register = async (username, email, password) => {
         try {
             await registerUser({ username, email, password });
-            //navigate('/search');
+            navigate('/');
         } catch (error) {
             toast.error(error.message);
         }

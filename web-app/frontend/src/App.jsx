@@ -2,9 +2,12 @@ import React from 'react';
 import { ToastContainer } from 'react-toastify'; // Importe o ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Importe o CSS do toastify
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+
 import Login from './components/Login.jsx'; 
 import Register from './components/Register.jsx';
-import { AuthProvider } from './contexts/AuthContext.jsx';
+import UserLabs from './components/UserLabs.jsx';
+
 //import './App.css'
 
 const App = () => {
@@ -22,8 +25,9 @@ const App = () => {
                   draggable
               />
               <Routes>
-                  <Route path="/login" element={<Login />} />
+                  <Route path="/" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/labs" element={<UserLabs />} />
               </Routes>
           </AuthProvider>
       </Router>

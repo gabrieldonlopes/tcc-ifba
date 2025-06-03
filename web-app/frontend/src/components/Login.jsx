@@ -3,21 +3,26 @@ import { AuthContext,AuthProvider } from '../contexts/AuthContext.jsx';
 import { Link } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { get_labs_for_user } from '../api/api_lab.js';
+
 const Login = () => {
     const [formData, setFormData] = useState({
         username: '',
         password: ''
     });
 
-    const { login } = useContext(AuthContext);
+    const { login,token } = useContext(AuthContext);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        login(formData.username, formData.password);
+        await login(formData.username, formData.password);
+
+        const labs = get_labs_for_user(token);
+        //console.log(labs);
     };
 
     return (
