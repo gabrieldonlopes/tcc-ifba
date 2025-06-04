@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const API_URL = "http://localhost:8000";
-const API_KEY = "4de3df2d3c9df240127d7e21d31fbed13e5bf22fde0e010bd3999a260d5be333";
+const API_KEY = "4de3df2d3c9df240127d7e21d31fbed13e5bf22fde0e010bd3999a260d5be333"; 
+// estou dando commit nessa key, mas é claro que vou utilizar outra key
+// tive problemas de configuração com dotenv no js
 
 const handleRequest = async (requestFunction, token = null, useApiKey = false) => {
     try {
@@ -25,8 +27,8 @@ const handleRequest = async (requestFunction, token = null, useApiKey = false) =
     }
 };
 
-const get_labs_for_user = (token) => 
-    handleRequest((config) => axios.get(`${API_URL}/users/me/labs`, config), token);
+const get_lab = (lab_id) => 
+    handleRequest((config) => axios.get(`${API_URL}/${lab_id}`, config), true);
 
 const create_new_lab = (token, labData) => 
     handleRequest(
@@ -35,4 +37,44 @@ const create_new_lab = (token, labData) =>
         true // precisa de api-key
     );
 
-export { get_labs_for_user, create_new_lab };
+const update_lab = (token, lab_id, labData) =>
+    handleRequest(
+        (config) => axios.patch(`${API_URL}/update/${lab_id}`, labData, config),
+        token,
+        true
+    );
+
+const join_lab = (token, lab_id) =>
+    handleRequest(
+        (config) => axios.post(`${API_URL}/join/${lab_id}`, config),
+        token,
+        true
+    );
+
+const delete_lab = (token, lab_id) =>
+    handleRequest(
+        (config) => axios.delete(`${API_URL}/delete/${lab_id}`, config),
+        token,
+        true
+    );
+
+const get_labs_for_user = (token) => 
+    handleRequest((config) => axios.get(`${API_URL}/users/me/labs`, config), token);
+
+const get_machines_for_lab = () =>
+    handleRequest(
+        (config) => axios.get(`${API_URL}/${lab_id}/machines`, config),
+        true
+    );
+
+const get_users_for_lab = () =>
+    handleRequest(
+        (config) => axios.get(`${API_URL}/${lab_id}/users`, config),
+        true
+    );
+    
+
+export {
+    get_lab, get_labs_for_user, create_new_lab, update_lab,
+    join_lab, delete_lab, get_machines_for_lab, get_users_for_lab
+};
