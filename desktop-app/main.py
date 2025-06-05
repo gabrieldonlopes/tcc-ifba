@@ -10,6 +10,15 @@ if local_config:
 else:
     app = ConfigMachineTemplate()
     
+
+#TODO: resolver bug de janela
+#NOTE: para facilitar o registro de máquina dados motherboard, memory etc. poderiam ser pegos automaticamente através de utils
+#NOTE: o template de configuracao e suas respectivas foi retrabalhado para uso síncrono. a antiga abordagem apresentava problemas de
+# desempenho em algumas máquinas
+#NOTE: pensar numa forma de armazenar dados localmente para caso o sistema não tenha acesso a internet
+  
+#TODO: implementar métodos de visualização das sessões localmente
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

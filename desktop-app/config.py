@@ -1,170 +1,256 @@
 import secrets
-import aiohttp
 import json
 import os 
 import requests as req
-import asyncio
 
 from pydantic import ValidationError
 from dotenv import load_dotenv
-from typing import Optional
+from typing import Optional,Union
 
 from schemas import MachineConfig,NewMachineConfig,LocalConfig,LabInfo
 from exceptions import MachineKeyAlreadyExists
-#TODO: adicionar operações async
 
 load_dotenv()
 
-WEB_API_KEY = os.getenv("WEB_API_KEY")
-BASE_URL = os.getenv("BASE_URL")
+WEB_API_KEY: Optional[str] = os.getenv("WEB_API_KEY")
+BASE_URL: Optional[str] = os.getenv("BASE_URL")
 
-def transform_model_machine_config():
-    pass
+#TODO: parametizar o config.json (config_path=CONFIG_JSON) para ele ser extraído do env
+#TODO: adicionar alguma forma de logging ou registro
+#TODO: post_config_from_ui está muito longo dividir em: post_new_config(),update_existing_config(),handle_key_conflict()
 
 def create_machine_key() -> str:
-    if get_machine_key(): # verificacao de chave
-        raise MachineKeyAlreadyExists
-
-    return secrets.token_hex(32) # cria uma chave para machine
+    """
+    Returns an existing machine key if found in config.json, otherwise generates a new one.
+    The new key is NOT saved to config.json by this function.
+    """
+    key = get_machine_key()
+    if not key:
+        return secrets.token_hex(32)
+    return key
 
 def get_machine_key() -> Optional[str]:
-    try:
-        with open("config.json","r") as file:
-            config = json.load(file)
-    except (FileNotFoundError):
-        return None
-    except json.JSONDecodeError: # caso ocorra algum erro na leitura 
-        return None
-    return config.get("machine_key")
-
-async def get_machine_config() -> MachineConfig | None:
-    machine_key = get_machine_key()
-    headers = {
-        "api-key": WEB_API_KEY,
-        "Content-Type": "application/json"
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"{BASE_URL}/machine_config/{machine_key}",headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                try:
-                    return MachineConfig(**data)
-                except ValidationError as e:
-                    raise Exception(f"Dados inválidos da API: {e.errors()}")
-            elif response.status == 404:
-                return None
-            raise Exception(f"Erro na requisição: {response.status}")
-        
-def get_local_config()->LocalConfig:
+    """Retrieves the machine key from config.json."""
     if not os.path.isfile("config.json"):
         return None
-    with open("config.json", 'r', encoding='utf-8') as file:
-        data = json.load(file)
-        return LocalConfig(**data)
+    try:
+        with open("config.json", "r", encoding='utf-8') as file:
+            config_data = json.load(file)
+        return config_data.get("machine_key")
+    except (json.JSONDecodeError, FileNotFoundError):
+        return None
 
-def get_lab_info(lab_id:str)->LabInfo:
+#TODO: tirar os prints
+def get_machine_config() -> Optional[MachineConfig]:
+    """Retrieves machine configuration from the API."""
+    machine_key = get_machine_key()
+    if not machine_key:
+        #print("No machine key found. Cannot fetch machine config.")
+        return None
+
+    if not WEB_API_KEY or not BASE_URL:
+        #print("WEB_API_KEY or BASE_URL is not set in environment variables.")
+        raise Exception(f"Dados inválidos: WEB_API_KEY e BASE_URL")
+
     headers = {
         "api-key": WEB_API_KEY,
         "Content-Type": "application/json"
     }
-    response = req.get(
-        url=f"{BASE_URL}/lab/{lab_id}",
-        headers=headers,
-        verify=False,
-        timeout=10
-        )
     
-    if response.status_code != 200:
-        raise Exception("O laboratório não foi encontrado")
-
     try:
-        data = response.json()
-        return LabInfo(**data)
-    except Exception as e:
-        raise Exception(f"Erro ao processar dados do laboratório: {e}")
+        response = req.get(f"{BASE_URL}/machine_config/{machine_key}", headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            try:
+                return MachineConfig(**data)
+            except ValidationError as e:
+                raise Exception(f"Dados inválidos da API: {e.errors()}")
+        elif response.status_code == 404:
+            return None
+        response.raise_for_status() 
+    except req.exceptions.RequestException as e:
+        raise Exception(f"Erro de comunicação com a API ao buscar configuração da máquina: {e}")
+    return None 
 
-def write_local_info_to_json(local_config: LocalConfig, filename="config.json"):
-    config_dict = local_config.model_dump()
+def get_local_config() -> Optional[LocalConfig]:
+    """Reads local configuration from config.json."""
+    if not os.path.isfile("config.json"):
+        return None
     try:
-        with open(filename, "w") as f:
-            json.dump(config_dict, f, indent=4)
-        print(f"Configuração salva com sucesso no arquivo {filename}.")
-    except Exception as e:
-        print(f"Erro ao salvar a configuração: {e}")
+        with open("config.json", 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            return LocalConfig(**data)
+    except (json.JSONDecodeError, ValidationError, FileNotFoundError) as e:
+        #print(f"Error loading local config: {e}")
+        return None
 
-def save_local_config(machine_key:str,machine_config:MachineConfig):
-    lab_info = get_lab_info(lab_id=machine_config.lab_id)
 
-    local_config = LocalConfig(
-        machine_key=machine_key,
-        machine_name=machine_config.machine_name,
-        lab_name=lab_info.lab_name,   # usando colchetes
-        classes=lab_info.classes
-    )
-    write_local_info_to_json(local_config=local_config)
-
-async def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
+def get_lab_info(lab_id: str) -> Optional[LabInfo]:
+    """Retrieves laboratory information from the API."""
+    if not WEB_API_KEY or not BASE_URL:
+        #print("WEB_API_KEY or BASE_URL is not set in environment variables.")
+        raise Exception("Configuração crítica ausente: WEB_API_KEY e/ou BASE_URL não definidos.")
+        
+    headers = {
+        "api-key": WEB_API_KEY,
+        "Content-Type": "application/json"
+    }
     try:
-        machine_key = create_machine_key()
-
-        machine_config = NewMachineConfig(machine_key=machine_key, **raw_data)
-        print(machine_config.model_dump())
-        response = req.post(
-            url=f"{BASE_URL}/machine_config/new_machine",
-            headers={
-                "api-key": WEB_API_KEY,
-                "Content-Type": "application/json"
-            },
-            json=machine_config.model_dump(),
-            verify=False,
+        response = req.get(
+            url=f"{BASE_URL}/lab/{lab_id}",
+            headers=headers,
             timeout=10
         )
-
-        # salva informações básicas sobre a máquina
-        save_local_config(machine_key=machine_key,machine_config=machine_config)
         response.raise_for_status()
-        return True, "Configuração salva com sucesso"
+        data = response.json()
+        return LabInfo(**data)
+    except req.exceptions.HTTPError as http_err:
+        if response.status_code == 404:
+            raise Exception("O laboratório não foi encontrado")
+        raise Exception(f"Erro HTTP ao buscar informações do laboratório: {http_err}")
+    except req.exceptions.RequestException as req_err:
+        raise Exception(f"Erro de conexão ao buscar informações do laboratório: {req_err}")
+    except ValidationError as val_err:
+        raise Exception(f"Erro de validação nos dados do laboratório: {val_err.errors()}")
+    except Exception as e: # Catch any other unexpected errors
+        raise Exception(f"Erro ao processar dados do laboratório: {e}")
 
-    except req.exceptions.HTTPError as e:
-            error_detail = e.response.json().get('detail', str(e))
-            return False, error_detail    
-    except MachineKeyAlreadyExists:
-        try:
-            machine_key = get_machine_key()
-                    
+
+def write_local_info_to_json(local_config: LocalConfig, filename="config.json"):
+    """Writes the local configuration object to a JSON file."""
+    if not hasattr(local_config, 'model_dump'):
+        raise AttributeError("Objeto local_config inválido: método model_dump() não encontrado.")
+
+    config_dict = local_config.model_dump()
+    try:
+        with open(filename, "w", encoding='utf-8') as f:
+            json.dump(config_dict, f, indent=4)
+        #print(f"Configuração salva com sucesso no arquivo {filename}.")
+    except IOError as e: # More specific exception for file writing issues
+        raise IOError(f"Erro de E/S ao salvar a configuração local no arquivo {filename}: {e}")
+        #print(f"Erro de I/O ao salvar a configuração local: {e}")
+    except Exception as e:
+        raise Exception(f"Erro inesperado ao salvar a configuração local no arquivo {filename}: {e}")
+        #print(f"Erro inesperado ao salvar a configuração local: {e}")
+
+def save_local_config(machine_key: str, machine_config_data: Union[NewMachineConfig, MachineConfig]):
+    """Saves local configuration based on machine and lab info."""
+    try:
+        # Ensure lab_id is present
+        lab_id_val = getattr(machine_config_data, 'lab_id', None)
+        if not lab_id_val:
+            raise ValueError("ID do laboratório (lab_id) não encontrado na configuração da máquina.")
+
+        lab_info = get_lab_info(lab_id=lab_id_val)
+        if not lab_info: # Segurança adicional, embora get_lab_info deva levantar exceção antes
+            raise ValueError(f"Não foi possível obter informações para o lab_id: {lab_id_val} (resposta inesperada).")
+
+        # Ensure machine_name is present
+        machine_name_val = getattr(machine_config_data, 'machine_name', 'DefaultMachineName')
+        if not machine_name_val:
+             raise ValueError("Nome da máquina (machine_name) não encontrado na configuração.")
+
+        local_config_payload = {
+            "machine_key": machine_key,
+            "machine_name": machine_name_val,
+            "lab_name": getattr(lab_info, 'lab_name', 'DefaultLabName'),
+            "classes": getattr(lab_info, 'classes', [])
+        }
+        current_local_config = LocalConfig(**local_config_payload)
+        write_local_info_to_json(local_config=current_local_config)
+    except (ValueError, AttributeError, IOError, Exception) as e:
+        # Re-levanta a exceção para ser tratada por post_config_from_ui
+        raise Exception(f"Falha ao salvar configuração local: {e}")
+
+
+def post_config_from_ui(raw_data: dict) -> tuple[bool, str]:
+    """Posts new or updates existing machine configuration from UI data."""
+    if not WEB_API_KEY or not BASE_URL:
+        return False, "WEB_API_KEY or BASE_URL is not configured."
+
+    current_machine_key_from_file = get_machine_key()
+    is_update_operation = bool(current_machine_key_from_file)
+
+    headers = {
+        "api-key": WEB_API_KEY,
+        "Content-Type": "application/json"
+    }
+
+    try:
+        if is_update_operation and current_machine_key_from_file:
+            # Update existing configuration
+            machine_config_update_data = MachineConfig(**raw_data) # Validate raw_data
             response = req.patch(
-                url=f"{BASE_URL}/machine_config/update/{machine_key}",
-                headers={
-                    "api-key": WEB_API_KEY,
-                        "Content-Type": "application/json"
-                    },
-                json=MachineConfig(**raw_data).model_dump(),
-                verify=False,
+                url=f"{BASE_URL}/machine_config/update/{current_machine_key_from_file}",
+                headers=headers,
+                json=machine_config_update_data.model_dump(),
                 timeout=10
             )
-                
             response.raise_for_status()
-
-            # salva informações básicas sobre a máquina
-            save_local_config(machine_key=machine_key,machine_config=machine_config)
+            save_local_config(machine_key=current_machine_key_from_file, machine_config_data=machine_config_update_data)
             return True, "Configuração atualizada com sucesso"
+        else:
+            # Create new configuration
+            # `create_machine_key` will generate a new hex token if no config.json or key exists
+            key_for_new_machine = create_machine_key()
             
-        except req.exceptions.HTTPError as e:
-            error_detail = e.response.json().get('detail', str(e))
-            return False, error_detail
-            
-        except Exception as e:
-            return False, f"Falha ao atualizar: {str(e)}"
+            new_machine_payload = {"machine_key": key_for_new_machine, **raw_data}
+            machine_config_new_data = NewMachineConfig(**new_machine_payload) # Validate
 
-    except req.exceptions.RequestException as e:
-        return False, f"Erro de conexão: {str(e)}"
+            response = req.post(
+                url=f"{BASE_URL}/machine_config/new_machine",
+                headers=headers,
+                json=machine_config_new_data.model_dump(),
+                timeout=10
+            )
+            # If server says key already exists (e.g. 409 Conflict)
+            if response.status_code == 409: 
+                raise MachineKeyAlreadyExists(f"Chave da máquina {key_for_new_machine} já existe no servidor (conflito ao tentar criar).")
+            
+            response.raise_for_status()
+            save_local_config(machine_key=key_for_new_machine, machine_config_data=machine_config_new_data)
+            return True, "Configuração salva com sucesso"
+
+    except MachineKeyAlreadyExists as mkae:
+        # This block is hit if POSTing a new key (is_update_operation was False)
+        # resulted in a 409 or other explicit "key exists" error from the server.
+        # We might want to attempt an update if the key reported as existing is one we can use.
+        # The key that caused the conflict was `key_for_new_machine`.
+        conflicting_key_str = str(mkae)
+        try:
+            # Ex: "A chave da máquina XYZ já existe no servidor."
+            conflicting_key = conflicting_key_str.split(" ")[4] if " " in conflicting_key_str else None
+            if not conflicting_key: # Fallback se a extração falhar
+                 return False, f"Conflito de chave: {mkae}. Não foi possível extrair a chave para tentar atualização."
+
+            update_payload = MachineConfig(**raw_data) 
+            response = req.patch(
+                url=f"{BASE_URL}/machine_config/update/{conflicting_key}",
+                headers=headers,
+                json=update_payload.model_dump(),
+                timeout=10
+            )
+            response.raise_for_status()
+            save_local_config(machine_key=conflicting_key, machine_config_data=update_payload)
+            return True, f"Configuração atualizada com sucesso para a chave {conflicting_key} após conflito inicial."
+        except req.exceptions.HTTPError as e_patch:
+            error_detail = e_patch.response.json().get('detail', str(e_patch)) if e_patch.response else str(e_patch)
+            return False, f"Falha ao tentar atualizar configuração após conflito de chave ({e_patch.response.status_code if e_patch.response else 'N/A'}): {error_detail}"
+        except Exception as e_inner_patch: # Outros erros durante a tentativa de PATCH
+            return False, f"Falha interna ao tentar atualizar configuração após conflito de chave: {str(e_inner_patch)}"
+            
+    except req.exceptions.HTTPError as e: # Erros HTTP das chamadas PATCH ou POST principais
+        error_detail = e.response.json().get('detail', str(e)) if e.response else str(e)
+        status_code_info = f" (status: {e.response.status_code})" if e.response else ""
+        return False, f"Erro de API ao salvar configuração{status_code_info}: {error_detail}"
+            
+    except req.exceptions.RequestException as e: # Erros de conexão, timeout, etc.
+        return False, f"Erro de comunicação com a API ao salvar configuração: {str(e)}"
         
-    except ValidationError as e:
-        error_messages = []
-        for error in e.errors():
-            field = "->".join(map(str, error['loc']))
-            error_messages.append(f"{field}: {error['msg']}")
-        return False, f"Erro de validação: {'; '.join(error_messages)}"
+    except ValidationError as e: # Erro de validação dos dados de entrada (raw_data)
+        error_messages = [f"{'->'.join(map(str, err['loc']))}: {err['msg']}" for err in e.errors()]
+        return False, f"Erro de validação nos dados fornecidos: {'; '.join(error_messages)}"
         
-    except Exception as e:
-        return False, f"Erro inesperado: {str(e)}"
+    except (IOError, AttributeError, ValueError, Exception) as e: # Erros de save_local_config ou outros inesperados
+        return False, f"Erro ao processar ou salvar configuração: {str(e)}"
