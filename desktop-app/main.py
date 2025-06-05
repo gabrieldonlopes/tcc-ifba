@@ -18,6 +18,7 @@ else:
 #NOTE: pensar numa forma de armazenar dados localmente para caso o sistema não tenha acesso a internet
   
 #TODO: implementar métodos de visualização das sessões localmente
+#TODO: implementar verificacao de senha e turma no acesso de máquina
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
