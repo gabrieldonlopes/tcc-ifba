@@ -38,7 +38,7 @@ async def create_lab_endpoint(new_lab: LabCreate,user: User = Depends(get_curren
 async def update_lab_endpoint(lab_id: str, new_lab: LabUpdate,user: User = Depends(get_current_active_user),db: AsyncSession = Depends(get_db)):
     return await handle_request(update_lab, lab_id=lab_id, new_lab=new_lab, user=user,db=db)
 
-@router.post("/{lab_id}/join")
+@router.post("/join/{lab_id}")
 async def join_lab_endpoint(lab_id:str,user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     return await handle_request(join_lab,lab_id=lab_id,user=user,db=db)
 
@@ -46,10 +46,11 @@ async def join_lab_endpoint(lab_id:str,user: User = Depends(get_current_active_u
 async def delete_lab_endpoint(lab_id: str,user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     return await handle_request(delete_lab, lab_id=lab_id, db=db,user=user)
 
+# esse métodos podem ser utilizados pelo desktop-app, por isso não precisam de user
 @router.get("/{lab_id}/machines/", response_model=List[MachineConfigResponse])
 async def get_machines_for_lab_endpoint(lab_id:str,db: AsyncSession = Depends(get_db)):
     return await handle_request(get_machines_for_lab,lab_id=lab_id,db=db)
 
 @router.get("/{lab_id}/users/", response_model=List[UserResponse])
 async def get_users_for_lab_endpoint(lab_id:str,db: AsyncSession = Depends(get_db)):
-    return await handle_request(get_users_for_lab,lab_id=lab_id,db=db)
+    return await handle_request(get_users_for_lab,lab_id=lab_id,db=db)  

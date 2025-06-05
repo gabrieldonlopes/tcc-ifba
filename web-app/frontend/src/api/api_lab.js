@@ -76,5 +76,6 @@ const get_users_for_lab = () =>
 
 export {
     get_lab, get_labs_for_user, create_new_lab, update_lab,
-    join_lab, delete_lab, get_machines_for_lab, get_users_for_lab
+    join_lab, delete_lab, get_machines_for_lab, get_users_for_lab,
+    handleRequest
 };

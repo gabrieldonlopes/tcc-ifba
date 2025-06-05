@@ -21,7 +21,7 @@ const Login = () => {
         e.preventDefault();
         await login(formData.username, formData.password);
 
-        const labs = get_labs_for_user(token);
+        //const labs = get_labs_for_user(token);
         //console.log(labs);
     };
 

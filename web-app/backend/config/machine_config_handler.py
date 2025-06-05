@@ -4,9 +4,11 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy import or_
+from sqlalchemy.orm import selectinload
 
+from models import User
 from schemas import MachineConfig,NewMachineConfig
-from models import Machine, Lab
+from models import Machine, Lab, StateCleanliness
 from config.lab_handler import verify_lab
 
 async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig:
@@ -25,6 +27,24 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
         last_checked=machine_config_obj.last_checked.strftime("%d/%m/%Y"),
         lab_id=machine_config_obj.lab_id
     )
+
+async def verify_user_for_machine(machine_key:str,user:User,db: AsyncSession) -> Machine:
+    result = await db.execute(select(
+        Machine.where(
+            Machine.machine_key == machine_key
+        ).options(
+            selectinload(Machine.lab).selectinload(Lab.users)
+        )
+    ))
+    machine_obj = result.scalars().first()
+
+    if not machine_obj:
+        raise HTTPException(status_code=404,detail="Computador não foi encontrado")
+
+    if user not in machine_obj.lab.users:
+        raise HTTPException(status_code=403,detail="Usuário não autorizado")
+    
+    return machine_obj
 
 async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession):
     if not await verify_lab(new_machine.lab_id,db=db):
@@ -54,18 +74,60 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
     await db.commit()
     return {"message":"Configuração do computador registrada com Sucesso!"}
 
-async def delete_machine(machine_key:str, db:AsyncSession):
-    result = await db.execute(select(Machine).filter(Machine.machine_key == machine_key))
-    machine_config_obj = result.scalars().first()
-    
-    if not machine_config_obj:
-        raise HTTPException(status_code=404,detail="Computador não foi encontrado") 
-    
+async def delete_machine(machine_key:str, user:User,db:AsyncSession):
+    machine_config_obj = await verify_user_for_machine(machine_key=machine_key,user=user,db=db)
+
     await db.delete(machine_config_obj)
     await db.commit()
     
     return {"message":"Computador removido do Laboratório com Sucesso"}
 
+async def update_last_check(machine_key:str,new_check:str,user:User,db:AsyncSession):
+    machine_obj = await verify_user_for_machine(machine_key=machine_key,user=user,db=db)
+
+    try:
+        try:
+            for_new_check = datetime.strptime(new_check, "%d/%m/%Y")
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="Formato de data incorreto"
+            )
+        machine_obj.last_checked = for_new_check
+        await db.commit()
+        await db.fresh(machine_obj)
+        
+        return {"message": "Estado de limpeza da máquina atualizado com sucesso"}
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def update_state_cleanliness(machine_key:str,new_state:str,user:User,db:AsyncSession):
+    machine_obj = await verify_user_for_machine(machine_key=machine_key,user=user,db=db)
+
+    try:
+        try:
+            state_enum_value = StateCleanliness(new_state.upper())
+        except ValueError:
+            valid_states = ", ".join([s.value for s in StateCleanliness])
+            raise HTTPException(
+                status_code=422, # Unprocessable Entity (more specific than 400 for invalid value for a field)
+                detail=f"Valor inválido para o estado de limpeza: '{new_state}'. Valores permitidos: {valid_states}."
+            )
+
+        machine_obj.state_cleanliness = state_enum_value
+        
+        await db.commit()
+        await db.refresh(machine_obj) # Refresh the object state from the database
+        
+        return {"message": "Estado de limpeza da máquina atualizado com sucesso"}
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+#TODO: esse método deve ser restrito
 async def update_machine_config(machine_key:str,new_config:MachineConfig, db:AsyncSession):
     if not await verify_lab(new_config.lab_id,db=db):
         raise HTTPException(status_code=404,detail="Lab não foi encontrado")
