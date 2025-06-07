@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-const API_URL = "http://localhost:8000";
-const API_KEY = "4de3df2d3c9df240127d7e21d31fbed13e5bf22fde0e010bd3999a260d5be333"; 
-// estou dando commit nessa key, mas é claro que vou utilizar outra key
-// tive problemas de configuração com dotenv no js
+const API_URL = import.meta.env.VITE_API_URL;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 const handleRequest = async (requestFunction, token = null, useApiKey = false) => {
     try {

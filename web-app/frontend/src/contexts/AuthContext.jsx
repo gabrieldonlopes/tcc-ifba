@@ -28,7 +28,7 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('token', response.access_token);
                 const userProfile = await fetchUserProfile(response.access_token);
                 setUser(userProfile);
-                navigate('/labs');
+                navigate('/user_labs');
             }
         } catch (error) {
             toast.error(error.message);

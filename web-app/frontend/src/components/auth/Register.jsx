@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { AuthContext,AuthProvider } from '../contexts/AuthContext.jsx';
+import { AuthContext,AuthProvider } from '../../contexts/AuthContext.jsx';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -27,7 +27,7 @@ const Register = () => {
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <div className="w-full max-w-md p-8 rounded-lg shadow-2xl bg-gray-800   ">
                     <h1 className="text-3xl font-bold text-center mb-6">
-                        TCC - teste
+                        InfoDomus
                     </h1>
                     <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center gap-4 p-6 w-full max-w-md'>
                         <input
