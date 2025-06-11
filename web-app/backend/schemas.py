@@ -91,8 +91,13 @@ class LabUpdate(BaseModel):
 class LabResponse(BaseModel):
     lab_name: str
     classes: List[str]
+    machine_count: int
+    student_count: int
+    user_count: int
 
-class LabResponseUser(LabResponse):
+class LabResponseUser(BaseModel):
+    lab_name: str
+    classes: List[str]
     lab_id: str
 
 class StudentResponse(BaseModel):

@@ -36,18 +36,22 @@ async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
     # TODO: pega a quantidade de todo o sistema, restringir para apenas do lab
     machine_count_query = select(func.count(Machine.machine_key))
     student_count_query = select(func.count(Student.student_id))
+    users_count_query = select(func.count(User.user_id))
 
     machine_result = await db.execute(machine_count_query)
     student_result = await db.execute(student_count_query)
+    user_result = await db.execute(users_count_query)
 
     total_machines = machine_result.scalar_one()
     total_students = student_result.scalar_one()
+    total_users = user_result.scalar_one()
 
     return LabResponse(
         lab_name=lab_obj.lab_name,
         classes=lab_obj.classes.split(","),
         machine_count=total_machines,
-        student_count=total_students
+        student_count=total_students,
+        
     )
 
 async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):
