@@ -3,6 +3,10 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+const defaultHeaders = {
+    'Authorization': API_KEY
+};
+
 const handleRequest = async (requestFunction, token = null, useApiKey = false) => {
     try {
         const headers = {};
@@ -26,7 +30,7 @@ const handleRequest = async (requestFunction, token = null, useApiKey = false) =
 };
 
 const get_lab = (lab_id) => 
-    handleRequest((config) => axios.get(`${API_URL}/${lab_id}`, config), true);
+    handleRequest((config) => axios.get(`${API_URL}/lab/${lab_id}`, config), null, true);
 
 const create_new_lab = (token, labData) => 
     handleRequest(

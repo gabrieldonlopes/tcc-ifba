@@ -84,7 +84,7 @@ const UserLabs = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             {labs.map((lab) => (
                                 <Link
-                                    key={lab.lab_id}
+                                    key=    {lab.lab_id}
                                     to={`/lab/${lab.lab_id}`}
                                     className={`group ${cardBg} p-6 rounded-lg border border-gray-800 hover:border-blue-700 transition-all duration-300 transform hover:-translate-y-1`}
                                 >

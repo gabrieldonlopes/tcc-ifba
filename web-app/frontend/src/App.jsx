@@ -32,7 +32,7 @@ const App = () => {
                   <Route path='/login' element={<Login />}/>
                   <Route path="/register" element={<Register />} />
                   <Route path="/user_labs" element={<UserLabs />} />
-                  <Route path="/lab" element={<Lab />} />
+                  <Route path="/lab/:lab_id" element={<Lab />} />
 
               </Routes>
           </AuthProvider>

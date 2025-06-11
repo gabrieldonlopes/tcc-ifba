@@ -1,5 +1,7 @@
-import React from 'react';
-
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { get_lab } from '../../api/api_lab.js';
+import { toast, ToastContainer } from 'react-toastify';
 // Componentes
 import Header from '../../components/Header.jsx'; // Verifique o caminho para seu Header
 
@@ -25,23 +27,44 @@ const ActionButton = ({ text, icon, colorClass }) => (
     </button>
 );
 
+//TODO: adicionar botões de voltar para seleção de labs
+//TODO: adicionar botões configurar lab
 const Lab = () => {
     // Estilo de Fundo da Página (mais escuro como na imagem)
     const pageBg = "bg-[#0D1117]";
     // Estilo do Fundo dos Cards (tom azulado escuro)
     const cardBg = "bg-[#161D27]";
 
-    // Dados de exemplo para o card de informações
+    const navigate = useNavigate();
+
+    const [lab, setLab] = useState(null);
+    const { lab_id } = useParams();
     const labData = {
-        students: 25,
-        machines: 20,
-        technicians: 2,
+        lab_name: lab?.lab_name,
+        classes: lab?.classes,
+        students: lab?.student_count,
+        machines: lab?.machine_count,
+        technicians: lab?.user_count,
         newTasks: 2,
     };
 
+    useEffect(() => {
+        const fetchLab = async () => {
+            try {
+                const data = await get_lab(lab_id);
+                setLab(data);
+            } catch (error) {
+                toast.error("Erro ao carregar a lab:", error);
+            }
+        };
+        fetchLab();
+    },[lab_id]);
+
     return (
         <div className={`min-h-screen `}>
-            <Header pageTitle="Sala de Informática 01 - EFASE01" />
+            <Header pageTitle={labData.lab_name} />
+            <ToastContainer position="bottom-right" autoClose={3000} />
+            
 
             {/* Container principal com padding para o header fixo */}
             <main className="container mx-auto p-6 pt-28 md:p-8 md:pt-28">
