@@ -2,13 +2,13 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import or_
+from sqlalchemy import or_,func
 
 from typing import List
 from schemas import (
     LabCreate,LabResponse,LabResponseUser,LabUpdate,MachineConfigResponse,UserResponse
 )
-from models import Lab,User
+from models import Lab,User,Machine,Student
 
 async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
     if user is not None:
@@ -32,9 +32,22 @@ async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
 async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
     lab_obj = await verify_lab(lab_id=lab_id,db=db)
     
+    # contagem de estudantes e máquinas
+    # TODO: pega a quantidade de todo o sistema, restringir para apenas do lab
+    machine_count_query = select(func.count(Machine.machine_key))
+    student_count_query = select(func.count(Student.student_id))
+
+    machine_result = await db.execute(machine_count_query)
+    student_result = await db.execute(student_count_query)
+
+    total_machines = machine_result.scalar_one()
+    total_students = student_result.scalar_one()
+
     return LabResponse(
         lab_name=lab_obj.lab_name,
-        classes=lab_obj.classes.split(",")
+        classes=lab_obj.classes.split(","),
+        machine_count=total_machines,
+        student_count=total_students
     )
 
 async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):
