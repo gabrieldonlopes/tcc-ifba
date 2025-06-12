@@ -51,7 +51,7 @@ async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
         classes=lab_obj.classes.split(","),
         machine_count=total_machines,
         student_count=total_students,
-        
+        user_count=total_users
     )
 
 async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):
@@ -143,6 +143,7 @@ async def get_machines_for_lab(lab_id:str,db:AsyncSession) -> List[MachineConfig
     return [
         MachineConfigResponse(
             machine_key=m.machine_key,
+            motherboard=m.motherboard,
             machine_name=m.machine_name,
             state_cleanliness=m.state_cleanliness,
             last_checked=m.last_checked.strftime("%d/%m/%Y"),

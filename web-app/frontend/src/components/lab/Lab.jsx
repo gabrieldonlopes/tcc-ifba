@@ -15,8 +15,9 @@ import {
 } from 'react-icons/fi';
 
 // Componente para os botões da nova barra lateral de ações
-const ActionButton = ({ text, icon, colorClass }) => (
+const ActionButton = ({ text, icon, colorClass, onClick }) => (
     <button 
+        onClick={onClick} // Adicionamos a prop onClick ao botão
         className={`w-full flex items-center gap-4 p-4 rounded-lg bg-[#161D27] border border-transparent 
                     hover:bg-gray-800 hover:border-gray-700 transition-all duration-300`}
     >
@@ -36,18 +37,21 @@ const Lab = () => {
     const cardBg = "bg-[#161D27]";
 
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
 
     const [lab, setLab] = useState(null);
     const { lab_id } = useParams();
     const labData = {
-        lab_name: lab?.lab_name,
-        classes: lab?.classes,
-        students: lab?.student_count,
-        machines: lab?.machine_count,
-        technicians: lab?.user_count,
+        lab_name: lab?.lab_name || "",
+        classes: lab?.classes.join(",") || "",
+        students: lab?.student_count || "",
+        machines: lab?.machine_count || "",
+        technicians: lab?.user_count || "",
         newTasks: 2,
     };
-
+    const handleNavigateToMachines = () => {
+        navigate(`/lab/${lab_id}/machines`);
+    };
     useEffect(() => {
         const fetchLab = async () => {
             try {
@@ -55,11 +59,23 @@ const Lab = () => {
                 setLab(data);
             } catch (error) {
                 toast.error("Erro ao carregar a lab:", error);
+            } finally {
+                setLoading(false);   
             }
         };
         fetchLab();
     },[lab_id]);
-
+    if (loading) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <div className="text-center">
+                    <div className="spinner-border animate-spin inline-block w-12 h-12 border-4 border-t-4 border-blue-500 rounded-full" role="status">
+                    </div>
+                    <p className="text-2xl font-semibold mt-4 text-white">Carregando informações do do lab...</p>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className={`min-h-screen `}>
             <Header pageTitle={labData.lab_name} />
@@ -86,7 +102,8 @@ const Lab = () => {
                         <ActionButton 
                             text="Máquinas" 
                             icon={<FiHardDrive size={22} className="text-white"/>} 
-                            colorClass="bg-green-600/80" 
+                            colorClass="bg-green-600/80"
+                            onClick={handleNavigateToMachines}
                         />
                         <ActionButton 
                             text="Tarefas" 
@@ -102,7 +119,12 @@ const Lab = () => {
                         <div className={`${cardBg} p-6 rounded-lg`}>
                             <ul className="space-y-5 text-gray-300">
                                 <li className="flex justify-between items-center text-lg">
-                                    <span>Estudantes Ativos</span> 
+                                <span> Estudantes Ativos 
+                                <span className="text-sm text-gray-600">
+                                    - {labData.classes}
+                                </span>
+                                
+                                </span> 
                                     <span className="font-bold text-white">{labData.students}</span>
                                 </li>
                                 <li className="flex justify-between items-center text-lg">

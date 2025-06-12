@@ -63,9 +63,10 @@ const delete_lab = (token, lab_id) =>
 const get_labs_for_user = (token) => 
     handleRequest((config) => axios.get(`${API_URL}/users/me/labs`, config), token);
 
-const get_machines_for_lab = () =>
+const get_machines_for_lab = (lab_id) => 
     handleRequest(
-        (config) => axios.get(`${API_URL}/${lab_id}/machines`, config),
+        (config) => axios.get(`${API_URL}/lab/${lab_id}/machines/`, config),
+        null,
         true
     );
 
@@ -74,7 +75,6 @@ const get_users_for_lab = () =>
         (config) => axios.get(`${API_URL}/${lab_id}/users`, config),
         true
     );
-    
 
 export {
     get_lab, get_labs_for_user, create_new_lab, update_lab,

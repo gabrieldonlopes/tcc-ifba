@@ -11,6 +11,8 @@ import Register from  './components/auth/Register.jsx';
 
 import Lab from './components/lab/Lab.jsx';
 import UserLabs from './components/lab/UserLabs.jsx';
+
+import MachinesPage from './components/machine/MachinePage.jsx';
 //import './App.css'
 
 const App = () => {
@@ -33,7 +35,7 @@ const App = () => {
                   <Route path="/register" element={<Register />} />
                   <Route path="/user_labs" element={<UserLabs />} />
                   <Route path="/lab/:lab_id" element={<Lab />} />
-
+                  <Route path="/lab/:lab_id/machines" element={<MachinesPage />}/>
               </Routes>
           </AuthProvider>
       </Router>

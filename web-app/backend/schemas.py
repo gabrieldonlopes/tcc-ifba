@@ -61,6 +61,7 @@ class NewMachineConfig(MachineConfig):
 
 class MachineConfigResponse(BaseModel):
     machine_key: str
+    motherboard: str
     machine_name: str
     state_cleanliness: StateCleanliness
     last_checked: str  # String no formato DD/MM/AAAA
