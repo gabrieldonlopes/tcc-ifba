@@ -6,9 +6,9 @@ from sqlalchemy import or_,func
 
 from typing import List
 from schemas import (
-    LabCreate,LabResponse,LabResponseUser,LabUpdate,MachineConfigResponse,UserResponse
+    LabCreate,LabResponse,LabResponseUser,LabUpdate,MachineConfigResponse,UserResponse,StudentResponse
 )
-from models import Lab,User,Machine,Student
+from models import Lab,User,Machine,Student,Session
 
 async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
     if user is not None:
@@ -194,4 +194,30 @@ async def get_users_for_lab(lab_id:str,db:AsyncSession) -> List[UserResponse]:
             email=u.email
         )
         for u in lab.users
+    ]
+async def get_students_for_lab(lab_id: str, db: AsyncSession) -> List[StudentResponse]:
+    result = await db.execute(
+        select(Lab)
+        .where(Lab.lab_id == lab_id)
+        .options(
+            # A estratégia de pré-carregamento continua a mesma e é essencial
+            selectinload(Lab.sessions).selectinload(Session.student)
+        )
+    )
+    lab = result.scalars().first()
+    
+    if not lab:
+        raise HTTPException(status_code=404, detail="Lab não foi encontrado")
+
+    # 1. Usar um 'set comprehension' para garantir que cada estudante seja adicionado apenas uma vez.
+    # O 'set' automaticamente ignora duplicatas.
+    unique_students = {s.student for s in lab.sessions if s.student is not None}
+    
+    return [    
+        StudentResponse(
+            student_id=u.student_id,
+            student_name=u.student_name,
+            class_var=u.class_var
+        )
+        for u in unique_students
     ]

@@ -52,6 +52,9 @@ const Lab = () => {
     const handleNavigateToMachines = () => {
         navigate(`/lab/${lab_id}/machines`);
     };
+    const handleNavigateToStudents = () => {
+        navigate(`/lab/${lab_id}/students`);
+    };
     useEffect(() => {
         const fetchLab = async () => {
             try {
@@ -97,7 +100,8 @@ const Lab = () => {
                         <ActionButton 
                             text="Estudantes" 
                             icon={<FiUsers size={22} className="text-white"/>} 
-                            colorClass="bg-blue-500/80" 
+                            colorClass="bg-blue-500/80"
+                            onClick={handleNavigateToStudents}
                         />
                         <ActionButton 
                             text="Máquinas" 

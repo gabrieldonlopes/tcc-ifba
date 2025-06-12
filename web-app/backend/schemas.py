@@ -102,6 +102,7 @@ class LabResponseUser(BaseModel):
     lab_id: str
 
 class StudentResponse(BaseModel):
+    student_id: int
     student_name: str
     class_var: str
 
