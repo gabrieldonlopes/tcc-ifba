@@ -32,7 +32,7 @@ const HomePage = () => {
             // SE o token existir no contexto, mostra este botão
             <button
               onClick={() => navigate('/user_labs')}
-              className="flex items-center justify-center w-full sm:w-auto gap-x-3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105"
+              className="flex items-center justify-center w-full sm:w-auto gap-x-3 bg-[#161D27]  hover:border-gray-700  text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105"
             >
               <FiGrid size={20} />
               <span>Acessar seus Labs</span>
