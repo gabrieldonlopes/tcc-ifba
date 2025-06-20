@@ -21,6 +21,12 @@ user_lab_association = Table(
     Column("user_id", ForeignKey("User.user_id"), primary_key=True),
     Column("lab_id", ForeignKey("Lab.lab_id"), primary_key=True)
 )
+task_machine_association = Table(
+    "task_machine_association",
+    Base.metadata,
+    Column("task_id", ForeignKey("Task.task_id"), primary_key=True),
+    Column("machine_key", ForeignKey("Machine.machine_key"), primary_key=True),
+)
 
 class Machine(Base):
     __tablename__ = "Machine"
@@ -37,6 +43,10 @@ class Machine(Base):
     lab: Mapped["Lab"] = relationship("Lab", back_populates="machines")
     
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="machine")
+
+    tasks: Mapped[list["Task"]] = relationship(
+        secondary="task_machine_association", back_populates="machines"
+    )
     @validates("last_checked")
     def validate_session_start(self, key, value):
         if isinstance(value, str):
@@ -128,5 +138,36 @@ class User(Base):
         secondary=user_lab_association,
         back_populates="users"
     )
-    
 
+# TODO: no futuro implementar função de resolver tarefa individualmente para cada máquina
+class Task(Base):
+    __tablename__ = "Task"
+
+    task_id: Mapped[int] = mapped_column(primary_key=True)
+    task_name: Mapped[str] = mapped_column(String(100), unique=True)
+    task_description: Mapped[str] = mapped_column(String(250))
+    is_complete: Mapped[bool] = mapped_column(Boolean, default=False)
+    task_creation: Mapped[datetime] = mapped_column(DateTime)
+
+    lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))
+    lab: Mapped["Lab"] = relationship("Lab")
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("User.user_id"))
+    user: Mapped["User"] = relationship("User")
+
+    # Relacionamento com Machine (muitas máquinas podem estar associadas a uma tarefa)
+    machines: Mapped[list["Machine"]] = relationship(
+        secondary="task_machine_association", back_populates="tasks"
+    )
+
+    @validates("task_creation")
+    def validate_task_creation(self, key, value):
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
+            except ValueError as e:
+                raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS") from e
+        elif isinstance(value, datetime):
+            return value
+        else:
+            raise TypeError("task_creation deve ser datetime ou string no formato válido.")

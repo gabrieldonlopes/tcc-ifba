@@ -1,10 +1,11 @@
 import asyncio
 from datetime import datetime
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
 
 from models import User
 from schemas import MachineConfig,NewMachineConfig
@@ -70,8 +71,16 @@ async def post_new_machine_config(new_machine:NewMachineConfig, db: AsyncSession
         lab_id=new_machine.lab_id,
         machine_key=new_machine.machine_key
     )
-    db.add(db_machine)
-    await db.commit()
+    
+    try:
+        db.add(db_machine)
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao criar computador. Detalhes: {str(e)}",
+        )
     return {"message":"Configuração do computador registrada com Sucesso!"}
 
 async def delete_machine(machine_key:str, user:User,db:AsyncSession):

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List,Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator,validator,root_validator
 from models import StateCleanliness
 
 # Authentication Schemas
@@ -153,3 +153,35 @@ class SessionResponse(BaseModel):
         json_encoders = {
             datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S") if v else None
         }
+
+class TaskResponse(BaseModel):
+    task_id: str
+    task_name: str
+    task_description: str
+    is_complete:bool
+    task_creation: str # Formato: DD/MM/AAAA HH:MM:SS
+
+    @field_validator('task_creation') # TODO: deixar isso aqui genérico
+    def validate_datetime_format(cls, value):
+        try:
+            datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
+            return value
+        except ValueError:
+            raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S") if v else None
+        }
+
+class TaskCreate(BaseModel):
+    task_name: str
+    task_description: str
+    lab_id: str
+    machines: List[str]
+    
+    @validator("machines")
+    def must_have_machines(cls, v):
+        if not v:
+            raise ValueError("A tarefa deve ser atribuída a pelo menos uma máquina.")
+        return v

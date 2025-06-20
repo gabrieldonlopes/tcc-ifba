@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 from sqlalchemy.ext.asyncio import AsyncSession 
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -19,9 +19,8 @@ async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
         existing_lab = lab_obj.scalars().first()
         if not existing_lab:
             raise HTTPException(status_code=404,detail="Lab não foi encontrado")
-        if user not in existing_lab.users:
-            raise HTTPException(status_code=404,detail="Operação não autorizada")
-    
+        if not any(u.user_id == user.user_id for u in lab_obj.users):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operação não autorizada")
     lab_obj = await db.execute(select(Lab).where(Lab.lab_id == lab_id))
     existing_lab = lab_obj.scalars().first()
     if not existing_lab:
