@@ -6,7 +6,9 @@ from sqlalchemy import or_,func
 
 from typing import List
 from schemas import (
-    LabCreate,LabResponse,LabResponseUser,LabUpdate,MachineConfigResponse,UserResponse,StudentResponse
+    LabCreate,LabResponse,LabResponseUser,LabUpdate,
+    MachineConfigResponse,UserResponse,StudentResponse,
+    LastSessionResponse
 )
 from models import Lab,User,Machine,Student,Session,user_lab_association,Task
 
@@ -192,12 +194,12 @@ async def get_users_for_lab(lab_id:str,db:AsyncSession) -> List[UserResponse]:
         )
         for u in lab.users
     ]
+
 async def get_students_for_lab(lab_id: str, db: AsyncSession) -> List[StudentResponse]:
     result = await db.execute(
         select(Lab)
         .where(Lab.lab_id == lab_id)
         .options(
-            # A estratégia de pré-carregamento continua a mesma e é essencial
             selectinload(Lab.sessions).selectinload(Session.student)
         )
     )
@@ -206,15 +208,29 @@ async def get_students_for_lab(lab_id: str, db: AsyncSession) -> List[StudentRes
     if not lab:
         raise HTTPException(status_code=404, detail="Lab não foi encontrado")
 
-    # 1. Usar um 'set comprehension' para garantir que cada estudante seja adicionado apenas uma vez.
-    # O 'set' automaticamente ignora duplicatas.
-    unique_students = {s.student for s in lab.sessions if s.student is not None}
-    
-    return [    
-        StudentResponse(
-            student_id=u.student_id,
-            student_name=u.student_name,
-            class_var=u.class_var
+    sessions_by_student = {}
+    for session in lab.sessions:
+        student = session.student
+        if student:
+            current_latest = sessions_by_student.get(student.student_id)
+            if current_latest is None or session.session_start > current_latest.session_start:
+                sessions_by_student[student.student_id] = session
+
+    response_list = []
+    for student_id, last_session in sessions_by_student.items():
+        student = last_session.student
+        response_list.append(
+            StudentResponse(
+                student_id=student.student_id,
+                student_name=student.student_name,
+                class_var=student.class_var,
+                last_session=LastSessionResponse(
+                    session_id=last_session.session_id,
+                    session_start=last_session.session_start,
+                    lab_id=last_session.lab_id,
+                    machine_key=last_session.machine_key,
+                )
+            )
         )
-        for u in unique_students
-    ]
+
+    return response_list

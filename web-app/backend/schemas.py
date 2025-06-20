@@ -102,10 +102,17 @@ class LabResponseUser(BaseModel):
     classes: List[str]
     lab_id: str
 
+class LastSessionResponse(BaseModel):
+    session_id: int
+    session_start: datetime
+    lab_id: str
+    machine_key: str
+
 class StudentResponse(BaseModel):
     student_id: int
     student_name: str
     class_var: str
+    last_session: Optional[LastSessionResponse] = None
 
 class SessionCreate(BaseModel):
     student_name: str
