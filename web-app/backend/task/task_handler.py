@@ -69,7 +69,8 @@ async def post_new_task(new_task: TaskCreate, user:User,db:AsyncSession):
     return {"message":"Tarefa registrada com Sucesso!"}
     
 async def get_tasks_for_lab(lab_id:str,user:User,db:AsyncSession) -> List[TaskResponse]:
-    lab_result = await db.execute(select(Lab).where(Lab.lab_id == lab_id).options(selectinload(Lab.users),selectinload(Lab.tasks)))
+    lab_result = await db.execute(select(Lab).where(Lab.lab_id == lab_id)
+                                  .options(selectinload(Lab.users),selectinload(Lab.tasks).selectinload(Task.machines)))
     lab_obj = lab_result.scalars().first()
     
     # verifica existência do lab
@@ -85,18 +86,19 @@ async def get_tasks_for_lab(lab_id:str,user:User,db:AsyncSession) -> List[TaskRe
             task_name=t.task_name,
             task_description=t.task_description,
             is_complete=t.is_complete,
-            task_creation=t.task_creation.isoformat()
+            task_creation=t.task_creation.isoformat(),
+            machine_keys=[m.machine_key for m in t.machines]
         )
         for t in lab_obj.tasks
     ]
-    
+
 async def get_tasks_for_machine(machine_key: str, user: User, db: AsyncSession) -> List[TaskResponse]:
     result = await db.execute(
         select(Machine)
         .where(Machine.machine_key == machine_key)
         .options(
             selectinload(Machine.lab).selectinload(Lab.users),  # carrega os usuários do lab
-            selectinload(Machine.tasks)  # carrega as tasks da máquina
+            selectinload(Machine.tasks).selectinload(Task.machines)  # carrega as tasks da máquina
         )
     )
     machine_obj = result.scalars().first()
@@ -110,13 +112,14 @@ async def get_tasks_for_machine(machine_key: str, user: User, db: AsyncSession) 
 
     return [
         TaskResponse(
-            task_id=task.task_id,
-            task_name=task.task_name,
-            task_description=task.task_description,
-            is_complete=task.is_complete,
-            task_creation=task.task_creation.isoformat()
+            task_id=t.task_id,
+            task_name=t.task_name,
+            task_description=t.task_description,
+            is_complete=t.is_complete,
+            task_creation=t.task_creation.isoformat(),
+            machine_keys=[m.machine_key for m in t.machines]
         )
-        for task in machine_obj.tasks
+        for t in machine_obj.tasks
     ]
 
 async def complete_task(task_id:int,user:User,db:AsyncSession):
