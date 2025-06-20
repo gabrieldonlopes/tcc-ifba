@@ -43,11 +43,11 @@ async def delete_machine_endpoint(machine_key: str,user: User = Depends(get_curr
 
 @router.patch("/update/{machine_key}/last_check")
 async def update_machine_last_check_endpoint(machine_key: str,new_check:str, user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
-    return await handle_request(update_machine_last_check,machine_key=machine_key,new_check=new_check,user=user,db=db)
+    return await handle_request(update_last_check,machine_key=machine_key,new_check=new_check,user=user,db=db)
 
 @router.patch("/update/{machine_key}/state_cleanliness")
 async def update_machine_state_cleanliness_endpoint(machine_key: str,new_state:str, user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
-    return await handle_request(update_machine_state_cleanliness,machine_key=machine_key,new_chec=new_check,user=user,db=db)
+    return await handle_request(update_state_cleanliness,machine_key=machine_key,new_state=new_state,user=user,db=db)
 
 # endpoint restrito a desktop-app
 @router.patch("/update/{machine_key}")

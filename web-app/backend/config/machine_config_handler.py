@@ -30,13 +30,12 @@ async def get_machine_config(machine_key:str, db: AsyncSession) -> MachineConfig
     )
 
 async def verify_user_for_machine(machine_key:str,user:User,db: AsyncSession) -> Machine:
-    result = await db.execute(select(
-        Machine.where(
-            Machine.machine_key == machine_key
+    result = await db.execute(select(Machine)
+            .where(Machine.machine_key == machine_key
         ).options(
             selectinload(Machine.lab).selectinload(Lab.users)
         )
-    ))
+    )
     machine_obj = result.scalars().first()
 
     if not machine_obj:
@@ -104,9 +103,9 @@ async def update_last_check(machine_key:str,new_check:str,user:User,db:AsyncSess
             )
         machine_obj.last_checked = for_new_check
         await db.commit()
-        await db.fresh(machine_obj)
+        await db.refresh(machine_obj)
         
-        return {"message": "Estado de limpeza da máquina atualizado com sucesso"}
+        return {"message": "Última checagem atualizada"}
 
     except Exception as e:
         await db.rollback()
@@ -128,7 +127,7 @@ async def update_state_cleanliness(machine_key:str,new_state:str,user:User,db:As
         machine_obj.state_cleanliness = state_enum_value
         
         await db.commit()
-        await db.refresh(machine_obj) # Refresh the object state from the database
+        await db.refresh(machine_obj)
         
         return {"message": "Estado de limpeza da máquina atualizado com sucesso"}
 
