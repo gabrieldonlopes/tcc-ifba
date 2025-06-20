@@ -1,12 +1,5 @@
 import axios from 'axios';
-import { handleRequest } from './api_lab';
-
-const API_URL = import.meta.env.VITE_API_URL;
-const API_KEY = import.meta.env.VITE_API_KEY;
-
-const defaultHeaders = {
-    'Authorization': API_KEY
-};
+import { handleRequest,API_URL } from './api_lab';
 
 const create_new_task = (token, taskData) => 
     handleRequest(

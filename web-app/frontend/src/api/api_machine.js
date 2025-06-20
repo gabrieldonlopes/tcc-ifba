@@ -1,7 +1,13 @@
 import axios from 'axios';
-import { handleRequest } from './api_lab';
+import { handleRequest,API_URL } from './api_lab';
 
-// estou dando commit nessa key, mas é claro que vou utilizar outra key
-// tive problemas de configuração com dotenv no js
+const get_machine_config = (machine_key) => 
+    handleRequest(
+        (config) => axios.get(`${API_URL}/machine_config/${machine_key}`, config), 
+        null,
+        true // precisa da chave de api
+    );
 
-    
+export {
+    get_machine_config
+}
