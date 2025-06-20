@@ -69,9 +69,10 @@ const UserLabs = () => {
     //const pageBg = "bg-[#0D1117]"; 
     // Estilo do Fundo dos Cards (tom azulado escuro)
     const cardBg = "bg-[#161D27]";
+    const pageBg = "bg-[#0D1117]";
 
     return (
-        <div className={`flex flex-col min-h-screen `}>
+        <div className={`${pageBg} flex flex-col min-h-screen `}>
             <ToastContainer position="bottom-right" autoClose={3000} />
             <Header pageTitle="Meus Laboratórios" />
 
@@ -136,7 +137,7 @@ const UserLabs = () => {
                 onRequestClose={closeModal}
                 contentLabel="Criar Novo Lab"
                 className={`modal-content ${cardBg} p-8 rounded-lg shadow-2xl max-w-md w-full text-white border border-gray-700 outline-none`}
-                overlayClassName="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4"
+                overlayClassName="modal-overlay fixed inset-0  bg-opacity-75 flex items-center justify-center p-4"
             >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">Criar Novo Lab</h2>

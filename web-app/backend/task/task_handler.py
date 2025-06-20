@@ -87,7 +87,8 @@ async def get_tasks_for_lab(lab_id:str,user:User,db:AsyncSession) -> List[TaskRe
             task_description=t.task_description,
             is_complete=t.is_complete,
             task_creation=t.task_creation.isoformat(),
-            machine_keys=[m.machine_key for m in t.machines]
+            machine_keys=[m.machine_key for m in t.machines],
+            machine_names=[m.machine_name for m in t.machines]
         )
         for t in lab_obj.tasks
     ]
@@ -117,7 +118,8 @@ async def get_tasks_for_machine(machine_key: str, user: User, db: AsyncSession) 
             task_description=t.task_description,
             is_complete=t.is_complete,
             task_creation=t.task_creation.isoformat(),
-            machine_keys=[m.machine_key for m in t.machines]
+            machine_keys=[m.machine_key for m in t.machines],
+            machine_names=[m.machine_name for m in t.machines]
         )
         for t in machine_obj.tasks
     ]

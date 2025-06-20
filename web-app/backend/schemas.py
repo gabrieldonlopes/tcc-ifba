@@ -161,6 +161,7 @@ class TaskResponse(BaseModel):
     task_description: str
     is_complete: bool
     machine_keys: List[str] = []
+    machine_names: List[str] = []
     task_creation: datetime  # Agora usa datetime de verdade
 
     class Config:

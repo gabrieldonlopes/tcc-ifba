@@ -77,6 +77,13 @@ const get_students_for_lab = (lab_id) =>
         true
     );
 
+const get_tasks_for_lab = (token,lab_id) => 
+    handleRequest(
+        (config) => axios.get(`${API_URL}/tasks/lab/${lab_id}`, config),
+        token,
+        true
+    );
+
 const get_users_for_lab = () =>
     handleRequest(
         (config) => axios.get(`${API_URL}/${lab_id}/users`, config),
@@ -87,5 +94,5 @@ const get_users_for_lab = () =>
 export {
     get_lab, get_labs_for_user, create_new_lab, update_lab,
     join_lab, delete_lab, get_machines_for_lab, get_users_for_lab,
-    handleRequest,get_students_for_lab
+    handleRequest,get_students_for_lab,get_tasks_for_lab
 };

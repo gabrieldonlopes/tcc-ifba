@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { get_lab } from '../../api/api_lab.js';
+import { get_tasks_for_lab } from '../../api/api_lab.js';
 import { toast, ToastContainer } from 'react-toastify';
+import { AuthContext } from '../../contexts/AuthContext.jsx';
 // Componentes
 import Header from '../../components/Header.jsx'; // Verifique o caminho para seu Header
 
@@ -30,15 +32,17 @@ const ActionButton = ({ text, icon, colorClass, onClick }) => (
 
 //TODO: adicionar botões de voltar para seleção de labs
 //TODO: adicionar botões configurar lab
+//TODO: as informações do lab estão globais: corrigir
 const Lab = () => {
     // Estilo de Fundo da Página (mais escuro como na imagem)
     const pageBg = "bg-[#0D1117]";
+
     // Estilo do Fundo dos Cards (tom azulado escuro)
     const cardBg = "bg-[#161D27]";
-
+    const { token } = useContext(AuthContext);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-
+    const [pendingTasks, setPendingTasks] = useState([]);
     const [lab, setLab] = useState(null);
     const { lab_id } = useParams();
     const labData = {
@@ -47,7 +51,7 @@ const Lab = () => {
         students: lab?.student_count || "",
         machines: lab?.machine_count || "",
         technicians: lab?.user_count || "",
-        newTasks: 2,
+        newTasks: lab?.task_count || "",
     };
     const handleNavigateToMachines = () => {
         navigate(`/lab/${lab_id}/machines`);
@@ -55,15 +59,22 @@ const Lab = () => {
     const handleNavigateToStudents = () => {
         navigate(`/lab/${lab_id}/students`);
     };
+    const handleNavigateToTasks = () => {
+        navigate(`/lab/${lab_id}/tasks`);
+    };
     useEffect(() => {
         const fetchLab = async () => {
             try {
                 const data = await get_lab(lab_id);
                 setLab(data);
+        
+                const allTasks = await get_tasks_for_lab(token, lab_id);
+                const pendings = allTasks.filter(task => !task.is_complete).slice(0, 3);
+                setPendingTasks(pendings);
             } catch (error) {
-                toast.error("Erro ao carregar a lab:", error);
+                toast.error("Erro ao carregar a lab ou tarefas.");
             } finally {
-                setLoading(false);   
+                setLoading(false);
             }
         };
         fetchLab();
@@ -80,23 +91,15 @@ const Lab = () => {
         );
     }
     return (
-        <div className={`min-h-screen `}>
+        <div className={`min-h-screen ${pageBg}`}>
             <Header pageTitle={labData.lab_name} />
             <ToastContainer position="bottom-right" autoClose={3000} />
             
-
-            {/* Container principal com padding para o header fixo */}
             <main className="container mx-auto p-6 pt-28 md:p-8 md:pt-28">
                 
-                {/* Layout de duas colunas */}
                 <div className="flex flex-col md:flex-row gap-8">
 
-                    {/* Coluna da Esquerda (Ações) */}
-                    <aside className="w-full md:w-64 flex flex-col gap-y-5">
-                        <button className="w-full flex items-center gap-3 bg-blue-600 text-white p-4 rounded-lg font-bold text-lg hover:bg-blue-700 transition-colors">
-                            <FiPlus size={22} />
-                            Nova Tarefa
-                        </button>
+                    <aside className="w-full md:w-64 flex flex-col gap-y-5">                        
                         <ActionButton 
                             text="Estudantes" 
                             icon={<FiUsers size={22} className="text-white"/>} 
@@ -107,19 +110,18 @@ const Lab = () => {
                             text="Máquinas" 
                             icon={<FiHardDrive size={22} className="text-white"/>} 
                             colorClass="bg-green-600/80"
-                            onClick={handleNavigateToMachines}
+                            onClick={handleNavigateToMachines}  
                         />
                         <ActionButton 
                             text="Tarefas" 
                             icon={<FiFileText size={22} className="text-white"/>}
                             colorClass="bg-yellow-600/80"
+                            onClick={handleNavigateToTasks}
                         />
                     </aside>
 
-                    {/* Coluna da Direita (Informações) */}
                     <section className="flex-1 flex flex-col gap-y-8">
                         
-                        {/* Card de Dados do Laboratório */}
                         <div className={`${cardBg} p-6 rounded-lg`}>
                             <ul className="space-y-5 text-gray-300">
                                 <li className="flex justify-between items-center text-lg">
@@ -148,11 +150,30 @@ const Lab = () => {
                         
                         {/* Card de Tarefas/Avisos */}
                         <div className={`${cardBg} p-6 rounded-lg`}>
-                            <h3 className="text-xl text-white font-bold mb-4">Tarefas</h3>
-                            <button className="w-full bg-yellow-600/20 border border-yellow-500/30 text-yellow-300 p-4 rounded-lg flex items-center justify-center gap-x-3 hover:bg-yellow-600/30 transition-all duration-300">
-                                <FiAlertTriangle size={24} />
-                                <span className="font-bold text-lg">Atualizar Licenças</span>
-                            </button>
+                            <h3 className="text-xl text-white font-bold mb-4">Tarefas Pendentes</h3>
+
+                            {pendingTasks.length > 0 ? (
+                                <ul className="space-y-3">
+                                    {pendingTasks.map(task => (
+                                        <li
+                                            key={task.task_id}
+                                            className="flex flex-col md:flex-row md:justify-between md:items-center border-b border-gray-700 pb-2"
+                                        >
+                                            <span
+                                                className="font-medium text-gray-200 truncate"
+                                                title={task.task_name}
+                                            >
+                                                {task.task_name}
+                                            </span>
+                                            <span className="text-xs text-gray-500 mt-1 md:mt-0">
+                                                Criada em: {task.task_creation}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-gray-400 text-sm">Sem tarefas pendentes.</p>
+                            )}
                         </div>
                     </section>
                 </div>
