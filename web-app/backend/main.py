@@ -46,7 +46,7 @@ app.include_router(auth.router, prefix="/auth")
 app.include_router(session_endpoints.router, prefix="/session", dependencies=[Depends(verify_key)])
 app.include_router(machine_config_endpoints.router, prefix="/machine_config", dependencies=[Depends(verify_key)])     
 app.include_router(lab_endpoints.router, prefix="/lab", dependencies=[Depends(verify_key)])     
-app.include_router(task_endpoints.router, prefix="/task", dependencies=[Depends(verify_key)])
+app.include_router(task_endpoints.router, prefix="/tasks", dependencies=[Depends(verify_key)])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

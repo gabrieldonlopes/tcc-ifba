@@ -118,3 +118,29 @@ async def get_tasks_for_machine(machine_key: str, user: User, db: AsyncSession) 
         )
         for task in machine_obj.tasks
     ]
+
+async def complete_task(task_id:int,user:User,db:AsyncSession):
+    task_result = await db.execute(
+        select(Task)
+        .where(Task.task_id == task_id)
+        .options(selectinload(Task.user))
+    )
+    task_obj = task_result.scalars().first()
+
+    if not task_obj:
+        raise HTTPException(status_code=404,detail="Tarefa não foi encontrada")
+    if not (task_obj.user.user_id == user.user_id): # verificação se user pode criar um task no lab
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operação não autorizada")
+    if task_obj.is_complete:
+        raise HTTPException(status_code=409,detail="A tarefa já foi concluída anteriormente")
+    
+    task_obj.is_complete = True
+    try: 
+        await db.commit()
+        await db.refresh(task_obj)
+
+        return {"message":"Tarefa concluída com sucesso!"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+

@@ -4,7 +4,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from task.task_handler import(
-    post_new_task,get_tasks_for_lab,get_tasks_for_machine
+    post_new_task,get_tasks_for_lab,get_tasks_for_machine,complete_task
 )
 from models import User
 from auth.auth_handler import get_current_active_user
@@ -52,11 +52,19 @@ async def new_task_endpoint(new_task:TaskCreate,user: User = Depends(get_current
         db=db
     )
 
-@router.post("/complete/{task_id}")
-async def complete_task_endpoint():
-    pass
+@router.patch("/complete/{task_id}")
+async def complete_task_endpoint(task_id:int,user:User = Depends(get_current_active_user),db:AsyncSession=Depends(get_db)):
+    return await handle_request(
+        complete_task,
+        task_id=task_id,
+        user=user,
+        db=db
+    )
 
-@router.patch("/update/{task_id}")
-async def update_task_endpoint():
-    pass
+# esse método é realmente necessário?
+#@router.patch("/update/{task_id}")
+#async def update_task_endpoint():
+#    pass
 
+
+#TODO: estudar a necessidade de adicionar dados sobre quem e quando completou a tarefa 
