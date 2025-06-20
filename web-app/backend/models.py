@@ -82,7 +82,7 @@ class Lab(Base):
     )
     machines: Mapped[list["Machine"]] = relationship("Machine", back_populates="lab")
     sessions: Mapped[list["Session"]] = relationship("Session", back_populates="lab")
-
+    tasks: Mapped[list["Task"]] = relationship("Task",back_populates="lab")
 
 class Session(Base):
     __tablename__ = "Session"
@@ -150,7 +150,7 @@ class Task(Base):
     task_creation: Mapped[datetime] = mapped_column(DateTime)
 
     lab_id: Mapped[str] = mapped_column(ForeignKey("Lab.lab_id"))
-    lab: Mapped["Lab"] = relationship("Lab")
+    lab: Mapped["Lab"] = relationship("Lab", back_populates="tasks")
 
     user_id: Mapped[int] = mapped_column(ForeignKey("User.user_id"))
     user: Mapped["User"] = relationship("User")
@@ -159,7 +159,6 @@ class Task(Base):
     machines: Mapped[list["Machine"]] = relationship(
         secondary="task_machine_association", back_populates="tasks"
     )
-
     @validates("task_creation")
     def validate_task_creation(self, key, value):
         if isinstance(value, str):

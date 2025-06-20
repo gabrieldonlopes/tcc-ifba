@@ -155,23 +155,16 @@ class SessionResponse(BaseModel):
         }
 
 class TaskResponse(BaseModel):
-    task_id: str
+    task_id: int
     task_name: str
     task_description: str
-    is_complete:bool
-    task_creation: str # Formato: DD/MM/AAAA HH:MM:SS
-
-    @field_validator('task_creation') # TODO: deixar isso aqui genérico
-    def validate_datetime_format(cls, value):
-        try:
-            datetime.strptime(value, "%d/%m/%Y %H:%M:%S")
-            return value
-        except ValueError:
-            raise ValueError("Formato de data/hora inválido. Use DD/MM/AAAA HH:MM:SS")
+    is_complete: bool
+    task_creation: datetime  # Agora usa datetime de verdade
 
     class Config:
+        orm_mode = True
         json_encoders = {
-            datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S") if v else None
+            datetime: lambda v: v.strftime("%d/%m/%Y %H:%M:%S")
         }
 
 class TaskCreate(BaseModel):
