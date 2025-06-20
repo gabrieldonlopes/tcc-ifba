@@ -8,7 +8,7 @@ from typing import List
 from schemas import (
     LabCreate,LabResponse,LabResponseUser,LabUpdate,MachineConfigResponse,UserResponse,StudentResponse
 )
-from models import Lab,User,Machine,Student,Session
+from models import Lab,User,Machine,Student,Session,user_lab_association,Task
 
 async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
     if user is not None:
@@ -28,29 +28,27 @@ async def verify_lab(lab_id: str, db: AsyncSession,user:User=None) -> Lab:
 
     return existing_lab
 
-async def get_lab(lab_id:str, db: AsyncSession) -> LabResponse:
-    lab_obj = await verify_lab(lab_id=lab_id,db=db)
-    
-    # contagem de estudantes e máquinas
-    # TODO: pega a quantidade de todo o sistema, restringir para apenas do lab
-    machine_count_query = select(func.count(Machine.machine_key))
-    student_count_query = select(func.count(Student.student_id))
-    users_count_query = select(func.count(User.user_id))
+async def get_lab(lab_id: str, db: AsyncSession) -> LabResponse:
+    lab_obj = await verify_lab(lab_id=lab_id, db=db)
+
+    # Contagens restritas ao lab
+    machine_count_query = select(func.count(Machine.machine_key)).where(Machine.lab_id == lab_id)
+    student_count_query = select(func.count(Student.student_id)).join(Session).where(Session.lab_id == lab_id)
+    users_count_query = select(func.count(user_lab_association.c.user_id)).where(user_lab_association.c.lab_id == lab_id)
+    task_count_query = select(func.count(Task.task_id)).where(Task.lab_id == lab_id)
 
     machine_result = await db.execute(machine_count_query)
     student_result = await db.execute(student_count_query)
     user_result = await db.execute(users_count_query)
-
-    total_machines = machine_result.scalar_one()
-    total_students = student_result.scalar_one()
-    total_users = user_result.scalar_one()
+    task_result = await db.execute(task_count_query)
 
     return LabResponse(
         lab_name=lab_obj.lab_name,
         classes=lab_obj.classes.split(","),
-        machine_count=total_machines,
-        student_count=total_students,
-        user_count=total_users
+        machine_count=machine_result.scalar_one(),
+        student_count=student_result.scalar_one(),
+        user_count=user_result.scalar_one(),
+        task_count=task_result.scalar_one()  # novo campo
     )
 
 async def create_lab(new_lab: LabCreate,user:User, db: AsyncSession):

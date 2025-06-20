@@ -95,6 +95,7 @@ class LabResponse(BaseModel):
     machine_count: int
     student_count: int
     user_count: int
+    task_count: int  
 
 class LabResponseUser(BaseModel):
     lab_name: str
