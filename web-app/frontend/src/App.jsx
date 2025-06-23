@@ -11,8 +11,8 @@ import Register from  './components/auth/Register.jsx';
 
 import Lab from './components/lab/Lab.jsx';
 import UserLabs from './components/lab/UserLabs.jsx';
-
-import MachinesPage from './components/machine/MachinePage.jsx';
+import MachinePage from './components/machine/MachinePage.jsx';
+import MachineList from './components/machine/MachineList.jsx';
 import TaskPage from './components/tasks/TaskPage.jsx';
 import StudentsPage from './components/student/StudentPage.jsx';
 //import './App.css'
@@ -37,9 +37,10 @@ const App = () => {
                   <Route path="/register" element={<Register />} />
                   <Route path="/user_labs" element={<UserLabs />} />
                   <Route path="/lab/:lab_id" element={<Lab />} />
-                  <Route path="/lab/:lab_id/machines" element={<MachinesPage />} />
+                  <Route path="/lab/:lab_id/machines" element={<MachineList />} />
                   <Route path='/lab/:lab_id/students' element={<StudentsPage />} />
                   <Route path="/lab/:lab_id/tasks" element={<TaskPage />} />
+                  <Route path="/maquina/:machine_key" element={<MachinePage />} />
               </Routes>
           </AuthProvider>
       </Router>

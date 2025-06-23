@@ -36,7 +36,7 @@ const StudentCard = ({ student,onClick }) => {
 
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                     <span className="text-blue-300"><FiUser /></span>
-                    <span>Matrícula: {student.student_id}</span>
+                    <span>student_id: {student.student_id}</span>
                 </div>
             </div>
 

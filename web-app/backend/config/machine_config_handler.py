@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 
 from models import User
-from schemas import MachineConfig,NewMachineConfig
+from schemas import MachineConfig,NewMachineConfig,MachineNewState,MachineNewCheck
 from models import Machine, Lab, StateCleanliness
 from config.lab_handler import verify_lab
 
@@ -90,12 +90,12 @@ async def delete_machine(machine_key:str, user:User,db:AsyncSession):
     
     return {"message":"Computador removido do Laboratório com Sucesso"}
 
-async def update_last_check(machine_key:str,new_check:str,user:User,db:AsyncSession):
+async def update_last_check(machine_key:str,new_check:MachineNewCheck,user:User,db:AsyncSession):
     machine_obj = await verify_user_for_machine(machine_key=machine_key,user=user,db=db)
 
     try:
         try:
-            for_new_check = datetime.strptime(new_check, "%d/%m/%Y")
+            for_new_check = datetime.strptime(new_check.new_check, "%d/%m/%Y")
         except ValueError:
             raise HTTPException(
                 status_code=422,
@@ -111,12 +111,12 @@ async def update_last_check(machine_key:str,new_check:str,user:User,db:AsyncSess
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-async def update_state_cleanliness(machine_key:str,new_state:str,user:User,db:AsyncSession):
+async def update_state_cleanliness(machine_key:str,new_state:MachineNewState,user:User,db:AsyncSession):
     machine_obj = await verify_user_for_machine(machine_key=machine_key,user=user,db=db)
 
     try:
         try:
-            state_enum_value = StateCleanliness(new_state.upper())
+            state_enum_value = StateCleanliness(new_state.new_state.upper())
         except ValueError:
             valid_states = ", ".join([s.value for s in StateCleanliness])
             raise HTTPException(

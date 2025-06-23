@@ -22,9 +22,6 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         await login(formData.username, formData.password);
-
-        //const labs = get_labs_for_user(token);
-        //console.log(labs);
     };
 
     return (

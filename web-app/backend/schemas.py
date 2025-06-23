@@ -8,10 +8,8 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-
 class TokenData(BaseModel):
     username: str | None = None
-
 
 class UserCreate(BaseModel):
     username: str
@@ -79,6 +77,29 @@ class MachineConfigResponse(BaseModel):
             StateCleanliness: lambda v: v.value,
             datetime: lambda v: v.strftime("%d/%m/%Y") if v else None
         }
+
+class MachineNewCheck(BaseModel):
+    new_check:str
+    @validator('new_check')
+    def validate_new_check(cls, value):
+        value = value.strip()
+        # Verifica o formato dd/mm/yyyy
+        try:
+            data = datetime.strptime(value, "%d/%m/%Y")
+        except ValueError:
+            raise ValueError("Formato inválido para new_check. Use dd/mm/yyyy e uma data válida.")
+        return value
+
+VALID_STATES = {"bom", "regular", "urgente"}
+class MachineNewState(BaseModel):
+    new_state: str
+
+    @validator("new_state")
+    def validate_new_state(cls, value):
+        value = value.strip().lower()
+        if value not in VALID_STATES:
+            raise ValueError(f"Estado inválido. Opções válidas: {', '.join(VALID_STATES)}")
+        return value
 
 class LabCreate(BaseModel):
     lab_id: str

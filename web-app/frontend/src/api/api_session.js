@@ -15,12 +15,12 @@ const get_sessions_for_machine = (machine_key) =>
         true // precisa da chave de api
     );
 
-    const get_sessions_for_student = (student_id) => 
-        handleRequest(
-            (config) => axios.get(`${API_URL}/session/student/${student_id}`, config),
-            null,
-            true // precisa da chave de api
-        );
+const get_sessions_for_student = (student_id) => 
+    handleRequest(
+        (config) => axios.get(`${API_URL}/session/student/${student_id}`, config),
+        null,
+        true // precisa da chave de api
+    );
 
 export {
     get_sessions_for_lab,get_sessions_for_machine,get_sessions_for_student

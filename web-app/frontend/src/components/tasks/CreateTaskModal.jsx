@@ -3,12 +3,11 @@ import { get_machines_for_lab } from '../../api/api_lab';
 import { create_new_task } from '../../api/api_tasks'; 
 import { FiX } from 'react-icons/fi';
 
-const CreateTaskModal = ({ lab_id, token, onClose, onCreate }) => {
+const CreateTaskModal = ({ lab_id, token, onClose, onCreate,defaultSelectedMachines=[] }) => {
     const [taskName, setTaskName] = useState("");
     const [taskDescription, setTaskDescription] = useState("");
     const [machines, setMachines] = useState([]);
-    const [selectedMachines, setSelectedMachines] = useState([]);
-
+    const [selectedMachines, setSelectedMachines] = useState(defaultSelectedMachines);
     useEffect(() => {
         const fetchMachines = async () => {
             try {
