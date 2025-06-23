@@ -21,7 +21,10 @@ WEB_API_KEY = os.getenv("WEB_API_KEY")
 app = FastAPI(debug=True)
 
 origins = [
-    "http://localhost:5173",
+    "http://localhost:5173", # local
+    "http://34.59.27.75:80", # vps
+    "100.69.2.25:80", # tailscale home server
+    "100.115.208.5:80" # tailscale vps
 ]
 
 app.add_middleware( # serve para restringir o acesso da API
@@ -66,5 +69,5 @@ if __name__ == "__main__":
         asyncio.run(initialize_db(args.create_db))
 
     if args.run_server:
-        uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info", reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info")
     
