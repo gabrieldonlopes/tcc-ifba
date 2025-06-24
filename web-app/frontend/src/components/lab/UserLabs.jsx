@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Contexto e API
 import { AuthContext } from '../../contexts/AuthContext.jsx';
-import { get_labs_for_user, create_new_lab } from '../../api/api_lab.js';
+import { get_labs_for_user, create_new_lab,join_lab } from '../../api/api_lab.js';
 
 // Componentes e Ícones
 import Header from '../../components/Header.jsx'; // Verifique o caminho para seu Header
@@ -57,12 +57,34 @@ const UserLabs = () => {
         }
     };
 
-    const handleManualLabEntry = () => {
-        if (manualLabId.trim()) {
-            navigate(`/lab/${manualLabId}`);
-        } else {
+    const handleManualLabEntry = async () => {
+        const trimmedId = manualLabId.trim();
+        if (!trimmedId) {
             toast.warn('Por favor, insira um ID de laboratório.');
+            return;
         }
+
+        try {
+            await join_lab(token, trimmedId);
+            toast.success('Você foi adicionado ao laboratório com sucesso!');
+        } catch (error) {
+            if (error.response?.status === 409) {
+                toast.info('Você já está vinculado a este laboratório.');
+            } else {
+                const errorMessage = error.response?.data?.error || 'Erro ao participar do laboratório.';
+                toast.error(errorMessage);
+                return;
+            }
+        }
+
+        try {
+            const updatedLabs = await get_labs_for_user(token);
+            setLabs(updatedLabs);
+        } catch {
+            // Isso é secundário, então só avisa caso falhe
+            toast.warn('Não foi possível atualizar a lista de laboratórios.');
+        }
+
     };
 
     // Estilo do Fundo da Página (mais escuro como na imagem)

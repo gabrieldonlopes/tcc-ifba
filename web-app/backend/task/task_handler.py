@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from typing import List
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from models import User,Machine,Task,Lab
 from schemas import TaskCreate,TaskResponse
@@ -51,7 +52,7 @@ async def post_new_task(new_task: TaskCreate, user:User,db:AsyncSession):
     db_task = Task(
         task_name=new_task.task_name,
         task_description=new_task.task_description,
-        task_creation=datetime.now(),
+        task_creation=datetime.now(ZoneInfo("America/Sao_Paulo")),
         lab_id=new_task.lab_id,
         user_id=user.user_id,
         machines=machines_obj
@@ -134,8 +135,6 @@ async def complete_task(task_id:int,user:User,db:AsyncSession):
 
     if not task_obj:
         raise HTTPException(status_code=404,detail="Tarefa não foi encontrada")
-    if not (task_obj.user.user_id == user.user_id): # verificação se user pode criar um task no lab
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operação não autorizada")
     if task_obj.is_complete:
         raise HTTPException(status_code=409,detail="A tarefa já foi concluída anteriormente")
     

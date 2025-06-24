@@ -82,8 +82,6 @@ async def get_sessions_for_lab(lab_id: str, db: AsyncSession) -> List[SessionRes
     )
     sessions = result.scalars().all()
 
-    if not sessions:
-        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada.")
 
     return [
         SessionResponse(
@@ -119,9 +117,6 @@ async def get_sessions_for_student(student_id: int, db: AsyncSession) -> List[Se
     )
     sessions = result.scalars().all()
 
-    if not sessions:
-        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada para o estudante.")
-
     return [
         SessionResponse(
             session_start=s.session_start.strftime("%d/%m/%Y %H:%M:%S"),
@@ -155,9 +150,6 @@ async def get_sessions_for_machine(machine_key: str, db: AsyncSession) -> List[S
         )
     )
     sessions = result.scalars().all()
-
-    if not sessions:
-        raise HTTPException(status_code=404, detail="Nenhuma sessão foi encontrada para esta máquina.")
 
     return [
         SessionResponse(

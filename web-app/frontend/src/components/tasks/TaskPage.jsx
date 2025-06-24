@@ -11,15 +11,16 @@ import CreateTaskModal from './CreateTaskModal.jsx';
 import { get_tasks_for_lab } from '../../api/api_lab';
 import { create_new_task,complete_task } from '../../api/api_tasks.js';
 
-const TaskCard = ({ task, onComplete,token }) => {
+const TaskCard = ({ task, onComplete, token }) => {
     const cardBg = "bg-[#161D27]";
 
-    const handleComplete = async () => {
+    const handleCompleteTask = async (task_id) => {
         try {
-            await complete_task(token,task.task_id);
-            if (onComplete) onComplete();
-        } catch (error) {
-            console.error("Erro ao completar tarefa:", error);
+            await complete_task(token, task_id);
+            toast.success("Tarefa marcada como completa!");
+            onComplete();  // Chama o callback para recarregar a lista
+        } catch {
+            toast.error("Erro ao completar tarefa.");
         }
     };
 
@@ -30,14 +31,14 @@ const TaskCard = ({ task, onComplete,token }) => {
             {/* Botão flutuante */}
             {!task.is_complete && (
                 <button
-                    onClick={handleComplete}
+                    onClick={() => handleCompleteTask(task.task_id)} // <- CORRIGIDO
                     className="absolute top-3 right-3 px-3 py-1 text-xs rounded-md bg-green-600 text-white opacity-0 group-hover:opacity-100 transition duration-300 shadow hover:bg-green-700 z-10"
                 >
                     Completar
                 </button>
             )}
 
-            {/* Conteúdo da tarefa com opacidade reduzida no hover */}
+            {/* Conteúdo da tarefa */}
             <div className="flex flex-col transition-opacity duration-300 group-hover:opacity-60">
                 <div className="w-16 h-16 bg-blue-600/30 rounded-full flex items-center justify-center mb-4 border-2 border-blue-500/50">
                     <FiClipboard size={32} className="text-blue-300" />
@@ -106,7 +107,6 @@ const TaskPage = () => {
     const handleCreateTask = async (payload) => {
         try {
             // Chama a API para criar a nova tarefa
-            await create_new_task(token,payload);
             toast.success("Tarefa criada com sucesso!");
             setModalOpen(false);
             fetchTasks();

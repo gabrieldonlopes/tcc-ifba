@@ -48,14 +48,14 @@ const update_lab = (token, lab_id, labData) =>
 
 const join_lab = (token, lab_id) =>
     handleRequest(
-        (config) => axios.post(`${API_URL}/join/${lab_id}`, config),
+        (config) => axios.post(`${API_URL}/lab/join/${lab_id}`, {}, config),
         token,
         true
     );
-
+    
 const delete_lab = (token, lab_id) =>
     handleRequest(
-        (config) => axios.delete(`${API_URL}/delete/${lab_id}`, config),
+        (config) => axios.delete(`${API_URL}/lab/delete/${lab_id}`, config),
         token,
         true
     );

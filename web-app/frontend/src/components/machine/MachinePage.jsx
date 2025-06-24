@@ -310,7 +310,7 @@ const MachinePage = () => {
                         )}
                       </div>
                       <button
-                        onClick={() => handleCompleteTask(task.id)}
+                        onClick={() => handleCompleteTask(task.task_id)}
                         className="ml-4 px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded"
                       >
                         Completar
