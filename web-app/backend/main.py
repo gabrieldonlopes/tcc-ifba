@@ -18,15 +18,12 @@ from routers import (
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
 
-app = FastAPI(debug=True)
+app = FastAPI()
 
 origins = [
-    "http://localhost:5173", # local
-    "http://34.59.27.75:80", # vps
-    "100.69.2.25:80", # tailscale home server
-    "100.115.208.5:80" # tailscale vps
+    "http://backend:8080", # ip acessado pelo frontend
+    "http://backend:8000", # ip acessado pelo frontend
 ]
-
 app.add_middleware( # serve para restringir o acesso da API
     CORSMiddleware,
     allow_origins=origins,
