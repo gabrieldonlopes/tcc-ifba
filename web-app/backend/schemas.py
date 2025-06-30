@@ -111,6 +111,7 @@ class LabUpdate(BaseModel):
     classes: Optional[str] = None
 
 class LabResponse(BaseModel):
+    lab_id: str
     lab_name: str
     classes: List[str]
     machine_count: int
@@ -132,6 +133,7 @@ class LastSessionResponse(BaseModel):
 class StudentResponse(BaseModel):
     student_id: int
     student_name: str
+    student_password: str
     class_var: str
     last_session: Optional[LastSessionResponse] = None
 

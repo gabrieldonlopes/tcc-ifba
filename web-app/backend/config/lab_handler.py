@@ -45,6 +45,7 @@ async def get_lab(lab_id: str, db: AsyncSession) -> LabResponse:
     task_result = await db.execute(task_count_query)
 
     return LabResponse(
+        lab_id=lab_obj.lab_id,
         lab_name=lab_obj.lab_name,
         classes=lab_obj.classes.split(","),
         machine_count=machine_result.scalar_one(),
@@ -224,6 +225,7 @@ async def get_students_for_lab(lab_id: str, db: AsyncSession) -> List[StudentRes
                 student_id=student.student_id,
                 student_name=student.student_name,
                 class_var=student.class_var,
+                student_password=student.password_hash,
                 last_session=LastSessionResponse(
                     session_id=last_session.session_id,
                     session_start=last_session.session_start,
