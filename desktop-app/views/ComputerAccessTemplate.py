@@ -105,31 +105,51 @@ class ComputerAccessTemplate:
         class_var = self.class_var.get()
         password = self.password_entry.get()
 
-        # Login de administrador
+        # Admin login (unchanged)
         if name == "admin" and password == "admin" and class_var == "Selecione sua turma":
             self.allow_close = True
             try:
                 data: List[SessionResponse] = get_sessions_for_machine()
-                #print(data)
                 self._open_session_view(data)
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao obter dados: {str(e)}")
                 self.allow_close = False
             return
 
-        # Validação dos campos
+        # Master password check (new)
+        if password == "EFASE2025":
+            self.allow_close = True
+            try:
+                data: List[SessionResponse] = get_sessions_for_machine()
+                self._open_session_view(data)
+            except Exception as e:
+                messagebox.showerror("Erro", f"Falha ao obter dados: {str(e)}")
+                self.allow_close = False
+            return
+
+        # Validation (unchanged)
         if not name or not password or class_var == "Selecione sua turma":
             messagebox.showwarning("Atenção", "Por favor, preencha todos os campos.")
             return
 
         try:
-         #   user = verify_user(name, class_name, password)  # Modificado para usar senha
-            post_session(student_name=name,password=password,class_var=class_var)
-            self.allow_close = True
-            self._close_window()
+            success, message = post_session(
+                student_name=name,
+                password=password,
+                class_var=class_var
+            )
+            
+            if success:
+                self.allow_close = True
+                self._close_window()
+            else:
+                if "401" in message:
+                    messagebox.showerror("Erro", "Nome, senha ou turma incorretos!")
+                else:
+                    messagebox.showerror("Erro", f"Falha no login: {message}")
+                    
         except Exception as e:
-            messagebox.showerror("Erro", f"Falha no login: {str(e)}")
-
+            messagebox.showerror("Erro", f"Falha na conexão: {str(e)}")
     def _open_session_view(self, data):
         if not self.session_view:
             self.session_view = SessionViewTemplate(machine_name=self.COMPUTER_NAME,session_responses=data,parent_window=self)
