@@ -4,13 +4,21 @@ from tkinter import messagebox
 
 from pydantic import ValidationError
 from schemas import MachineConfig,StateCleanliness
-from config import get_machine_config,post_config_from_ui
+from config import get_machine_config_from_api,post_config_from_ui
 from utils.DatePicker import DatePicker
+from utils.pc_info import get_machine_config
 
 class ConfigMachineTemplate:
     def __init__(self, parent_window=None):
         self.parent = parent_window
-        self.root = ctk.CTkToplevel()
+        
+        if self.parent is None: # iniciada sozinha
+            self.root = ctk.CTk()  # JANELA RAIZ
+            self.is_root = True
+        else: # iniciada com SessionViewTemplate
+            self.root = ctk.CTkToplevel()  # JANELA FILHA
+            self.is_root = False
+
         self._init_window()
         self._load_configurations() # Chamada síncrona
 
@@ -29,68 +37,86 @@ class ConfigMachineTemplate:
 
     def _load_configurations(self):
         try:
-            # Assume que get_machine_config é agora uma função síncrona
-            config_data = get_machine_config() 
-            
+            config_data = get_machine_config_from_api()
+            from_api = True
+
+            if not config_data:
+                #print("API não retornou configuração, tentando buscar configuração local.")
+                config_data = get_machine_config()
+                #print(config_data)
+                from_api = False
+
             if hasattr(self, 'loading_label') and self.loading_label.winfo_exists():
                 self.loading_label.destroy()
-            
-            self._build_ui() # Constrói a UI
-            
+
+            self._build_ui()  # Constrói a UI antes de preencher os campos
+
             if config_data:
-                # Converte o dicionário para o objeto MachineConfig (se necessário)
-                # Se get_machine_config já retorna um objeto MachineConfig, isso não é necessário.
-                if isinstance(config_data, dict) and not isinstance(config_data, MachineConfig):
-                    config_data = MachineConfig(**config_data)
+                # Apenas converte para MachineConfig se vier da API
+                if from_api and isinstance(config_data, dict) and not isinstance(config_data, MachineConfig):
+                    try:
+                        config_data = MachineConfig(**config_data)
+                    except ValidationError as e:
+                        print("Erro de validação ao converter config da API:", e)
+                        messagebox.showerror("Erro de Dados", "Erro ao validar os dados da API.")
+                        return
+
                 self._fill_form_fields(config_data)
             else:
-                # Se não houver config_data, pode-se preencher com valores padrão ou deixar em branco
                 print("Nenhuma configuração existente encontrada.")
-                
+
         except Exception as e:
             if hasattr(self, 'loading_label') and self.loading_label.winfo_exists():
                 self.loading_label.destroy()
-            
-            # É importante construir a UI mesmo em caso de erro para o usuário poder interagir
-            # ou para exibir uma mensagem de erro mais clara na própria UI, se desejado.
-            if not hasattr(self, 'name_entry'): # Verifica se a UI já foi construída
+
+            if not hasattr(self, 'name_entry'):
                 self._build_ui()
 
             messagebox.showerror("Erro de Carregamento", f"Não foi possível carregar as configurações: {e}")
-            # print(f"Erro ao carregar configurações: {e}") # Para debug
-
-    def _fill_form_fields(self, config: MachineConfig):
-        # Garante que os widgets da UI existam antes de tentar preenchê-los
+    
+    def _fill_form_fields(self, config):
         if not hasattr(self, 'name_entry'):
-            print("Atenção: Tentativa de preencher campos antes da UI ser construída.")
             return
 
-        self.name_entry.insert(0, getattr(config, 'name', getattr(config, 'machine_name', ''))) # Adicionado fallback para 'machine_name'
-        self.motherboard_entry.insert(0, getattr(config, 'motherboard', ''))
-        self.memory_entry.insert(0, getattr(config, 'memory', ''))
-        self.storage_entry.insert(0, getattr(config, 'storage', ''))
-        self.lab_id_entry.insert(0, getattr(config, 'lab_id', ''))
-
-        cleanliness_value = getattr(config, 'state_cleanliness', None)
-        if isinstance(cleanliness_value, StateCleanliness): # Se for uma instância do Enum
-            self.clean_state_combobox.set(cleanliness_value.value)
-        elif isinstance(cleanliness_value, str): # Se for uma string (valor do Enum)
-             # Garante que o valor é um dos valores válidos do combobox
-            if cleanliness_value in self.clean_state_combobox.cget("values"):
-                self.clean_state_combobox.set(cleanliness_value)
+        def get_value(obj, key):
+            if isinstance(obj, dict):
+                return obj.get(key)
             else:
-                print(f"Valor de limpeza '{cleanliness_value}' inválido, usando padrão.")
-                self.clean_state_combobox.set(StateCleanliness.BOM) # Define um padrão
-        else:
-            self.clean_state_combobox.set(StateCleanliness.BOM) # Define um padrão se não houver valor
-        
-        last_checked_date = getattr(config, 'last_checked', None)
-        if last_checked_date and hasattr(self, 'date_picker'):
-            self.date_picker.entry.delete(0, "end")
-            # Formata a data se necessário, aqui assumimos que já é uma string "DD/MM/AAAA"
-            # Se for um objeto datetime, formate: datetime.strptime(last_checked_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-            self.date_picker.entry.insert(0, str(last_checked_date))
+                return getattr(obj, key, None)
 
+        name = get_value(config, 'machine_name') or get_value(config, 'name')
+        if name:
+            self.name_entry.insert(0, name)
+
+        motherboard = get_value(config, 'motherboard')
+        if motherboard:
+            self.motherboard_entry.insert(0, motherboard)
+
+        memory = get_value(config, 'memory')
+        if memory:
+            self.memory_entry.insert(0, memory)
+
+        storage = get_value(config, 'storage')
+        if storage:
+            self.storage_entry.insert(0, storage)
+
+        lab_id = get_value(config, 'lab_id')
+        if lab_id:
+            self.lab_id_entry.insert(0, lab_id)
+
+        cleanliness_value = get_value(config, 'state_cleanliness')
+        if cleanliness_value:
+            # Se for enum, pega o valor, se for string já usa direto
+            val = cleanliness_value.value if isinstance(cleanliness_value, StateCleanliness) else cleanliness_value
+            if val in self.clean_state_combobox.cget("values"):
+                self.clean_state_combobox.set(val)
+            else:
+                self.clean_state_combobox.set(StateCleanliness.BOM)  # padrão
+
+        last_checked = get_value(config, 'last_checked')
+        if last_checked and hasattr(self, 'date_picker'):
+            self.date_picker.entry.delete(0, "end")
+            self.date_picker.entry.insert(0, str(last_checked))
     def _build_ui(self):
         # Destrói o loading_label se ainda existir e a UI principal for construída
         if hasattr(self, 'loading_label') and self.loading_label.winfo_exists():
@@ -254,13 +280,14 @@ class ConfigMachineTemplate:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def close(self):
-        # if self.parent and self.parent.winfo_exists(): # Verifica se a janela pai existe
-        #    self.parent.deiconify()
         if self.root and self.root.winfo_exists():
             self.root.destroy()
-            self.root = None # Ajuda o garbage collector
+            self.root = None
+            if self.is_root:
+                # Se é a janela raiz principal, encerra o mainloop também
+                import sys
+                sys.exit()
     
     def run(self):
-        # Certifica-se de que a janela principal ainda não foi destruída
-        if self.root and self.root.winfo_exists():
+        if self.is_root:
             self.root.mainloop()

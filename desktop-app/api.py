@@ -39,7 +39,7 @@ def post_session(student_name: str,password: str,class_var: str) -> tuple[bool, 
             cpu_usage=pc_info.cpu_usage,
             ram_usage=pc_info.ram_usage,
             cpu_temp=pc_info.cpu_temp,
-            lab_id="LAB01"
+            lab_id="LAB01" # TODO: corrigir isso aqui
         )
         
         response = req.post(

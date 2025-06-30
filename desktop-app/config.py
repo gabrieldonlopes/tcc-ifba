@@ -41,7 +41,7 @@ def get_machine_key() -> Optional[str]:
         return None
 
 #TODO: tirar os prints
-def get_machine_config() -> Optional[MachineConfig]:
+def get_machine_config_from_api() -> Optional[MachineConfig]:
     """Retrieves machine configuration from the API."""
     machine_key = get_machine_key()
     if not machine_key:

@@ -1,78 +1,100 @@
+import os
+import shutil
+import platform
+import psutil
 from datetime import datetime
-from pydantic import BaseModel
-import psutil
-import platform
-from schemas import PcInfo
 
-if platform.system() == "Windows":
+from schemas import PcInfo  # mantém seu modelo existente
+
+# Verificação de plataforma
+SYSTEM = platform.system()
+
+# Inicialização do WMI se for Windows
+w = None
+if SYSTEM == "Windows":
     try:
         import wmi
         w = wmi.WMI(namespace="root\\wmi")
     except ImportError:
-        w = None
+        pass
 
-def get_session_start():
-    session_start = datetime.now()
-    return session_start.strftime("%d/%m/%Y %H:%M:%S")
 
-from pydantic import BaseModel
-import psutil
-import platform
+def get_session_start() -> str:
+    """Retorna a data/hora atual formatada."""
+    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
-if platform.system() == "Windows":
-    try:
-        import wmi
-        w = wmi.WMI(namespace="root\\wmi")
-    except ImportError:
-        w = None
-else:
-    w = None
 
-class PcInfo(BaseModel):
-    cpu_usage: float
-    ram_usage: float
-    cpu_temp: float  # Temperatura média da CPU; -1.0 se não disponível
-
-def get_pc_info() -> PcInfo:
-    cpu_usage = psutil.cpu_percent(interval=1)
-    memory = psutil.virtual_memory()
-    ram_usage = memory.percent
-
-    cpu_temp = -1.0  # Valor padrão
+def get_cpu_temp() -> float:
+    """Retorna a temperatura média da CPU, se possível."""
+    cpu_temp = -1.0  # padrão em caso de falha
 
     try:
         temps = psutil.sensors_temperatures()
-        # Procurar qualquer grupo de sensores com "core", "package", etc.
-        candidates = [k for k in temps.keys() if k.lower() in ["coretemp", "cpu-thermal", "acpitz", "package id 0"]]
+        candidates = [k for k in temps if k.lower() in ["coretemp", "cpu-thermal", "acpitz", "package id 0"]]
 
-        # Se houver sensores válidos
         for key in candidates:
-            entries = temps.get(key)
-            if entries:
-                valid_temps = [entry.current for entry in entries if entry.current is not None]
-                if valid_temps:
-                    cpu_temp = sum(valid_temps) / len(valid_temps)
-                    break  # Para no primeiro grupo válido
+            entries = temps[key]
+            valid = [entry.current for entry in entries if entry.current is not None]
+            if valid:
+                return round(sum(valid) / len(valid), 1)
     except Exception:
         pass
 
-    # Fallback para Windows (WMI)
-    if cpu_temp == -1.0 and platform.system() == "Windows" and w:
+    # Fallback WMI para Windows
+    if SYSTEM == "Windows" and w:
         try:
-            temperature_info = w.MSAcpi_ThermalZoneTemperature()
-            if temperature_info:
-                temps_kelvin = [
-                    (t.CurrentTemperature / 10) - 273.15
-                    for t in temperature_info
-                    if t.CurrentTemperature is not None
-                ]
-                if temps_kelvin:
-                    cpu_temp = sum(temps_kelvin) / len(temps_kelvin)
+            temps_kelvin = [
+                (t.CurrentTemperature / 10) - 273.15
+                for t in w.MSAcpi_ThermalZoneTemperature()
+                if t.CurrentTemperature is not None
+            ]
+            if temps_kelvin:
+                return round(sum(temps_kelvin) / len(temps_kelvin), 1)
         except Exception:
             pass
 
+    return cpu_temp
+
+
+def get_pc_info() -> PcInfo:
+    """Retorna informações dinâmicas do sistema (uso e temperatura)."""
     return PcInfo(
-        cpu_usage=cpu_usage,
-        ram_usage=ram_usage,
-        cpu_temp=round(cpu_temp, 1)
+        cpu_usage=psutil.cpu_percent(interval=1),
+        ram_usage=psutil.virtual_memory().percent,
+        cpu_temp=get_cpu_temp()
     )
+
+
+def get_machine_config() -> dict:
+    """Retorna informações estáticas do sistema (armazenamento, RAM, placa-mãe)."""
+    import math
+    total, _, free = shutil.disk_usage(os.path.abspath("/"))
+
+    # Memória RAM total arredondada para cima (ceil)
+    total_ram_gb = math.ceil(psutil.virtual_memory().total / (1024 ** 3))
+
+    # Armazenamento total arredondado para cima (ceil)
+    total_storage_gb = math.ceil(total / (1024 ** 3))
+
+    # Informações da placa-mãe
+    manufacturer = model = None
+    if SYSTEM == "Windows" and w:
+        try:
+            for board in w.Win32_BaseBoard():
+                model = board.Product
+        except Exception:
+            pass
+    elif SYSTEM == "Linux":
+        try:
+            with open("/sys/devices/virtual/dmi/id/board_vendor") as f:
+                manufacturer = f.read().strip()
+            with open("/sys/devices/virtual/dmi/id/board_name") as f:
+                model = f.read().strip()
+        except Exception:
+            pass
+
+    return {
+        "storage": f"{total_storage_gb}GB",
+        "memory": f"{total_ram_gb}GB",
+        "motherboard": model,
+    }
