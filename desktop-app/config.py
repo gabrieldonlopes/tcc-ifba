@@ -154,8 +154,9 @@ def save_local_config(machine_key: str, machine_config_data: Union[NewMachineCon
         local_config_payload = {
             "machine_key": machine_key,
             "machine_name": machine_name_val,
-            "lab_name": getattr(lab_info, 'lab_name', 'DefaultLabName'),
-            "classes": getattr(lab_info, 'classes', [])
+            "lab_name": getattr(lab_info, 'lab_name'),
+            "lab_id": getattr(lab_info, 'lab_id'),
+            "classes": getattr(lab_info, 'classes')
         }
         current_local_config = LocalConfig(**local_config_payload)
         write_local_info_to_json(local_config=current_local_config)

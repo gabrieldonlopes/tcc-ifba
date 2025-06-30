@@ -1,13 +1,13 @@
 import customtkinter as ctk
 from tkinter import ttk
 from typing import List
-
+from schemas import SessionResponse
 from views.ConfigMachineTemplate import ConfigMachineTemplate
 
 class SessionViewTemplate:
-    def __init__(self, machine_name: str, machine_responses: List[dict], parent_window):
+    def __init__(self, machine_name: str, session_responses: List[SessionResponse], parent_window):
         self.COMPUTER_NAME = machine_name
-        self.responses = machine_responses
+        self.responses: List[SessionResponse] = session_responses
         self.parent = parent_window
 
         self.root = ctk.CTkToplevel()
@@ -30,17 +30,17 @@ class SessionViewTemplate:
         tree_frame = ctk.CTkFrame(frame)
         tree_frame.pack(fill="both", expand=True)
 
-        columns = ("session_start", "name", "class_var", "cpf", "cpu_usage", "ram_usage", "cpu_temp")
+        columns = ("session_start", "student_name", "class_var","cpu_usage", "ram_usage", "cpu_temp","lab_name")
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=10)
 
         headers = {
             "session_start": "Início da Sessão",
-            "name": "Nome",
+            "student_name": "Estudante",
             "class_var": "Turma",
-            "cpf": "CPF",
             "cpu_usage": "Uso CPU (%)",
             "ram_usage": "Uso RAM (%)",
-            "cpu_temp": "Temp. CPU (°C)"
+            "cpu_temp": "Temp. CPU (°C)",
+            "lab_name": "Laboratório"
         }
 
         for col, text in headers.items():
@@ -50,13 +50,14 @@ class SessionViewTemplate:
         for r in self.responses:
             self.tree.insert("", "end", values=(
                 r.session_start,
-                r.user.name,
-                r.user.class_var,
-                r.user.password,
-                r.pc_info.cpu_usage,
-                r.pc_info.ram_usage,
-                r.pc_info.cpu_temp
+                r.student_name,
+                r.class_var,
+                r.cpu_usage,
+                r.ram_usage,
+                r.cpu_temp,
+                r.lab_name
             ))
+
 
         # Configurar a scrollbar antes de empacotar
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)

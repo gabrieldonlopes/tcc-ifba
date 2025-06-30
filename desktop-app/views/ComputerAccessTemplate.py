@@ -1,8 +1,9 @@
 import customtkinter as ctk
 from tkinter import messagebox
-
+from schemas import SessionResponse
+from typing import List
 from config import get_local_config
-from api import post_session, get_all_sessions
+from api import post_session, get_sessions_for_machine
 from views.SessionViewTemplate import SessionViewTemplate
 
 class ComputerAccessTemplate:
@@ -108,7 +109,8 @@ class ComputerAccessTemplate:
         if name == "admin" and password == "admin" and class_var == "Selecione sua turma":
             self.allow_close = True
             try:
-                data = get_all_sessions()
+                data: List[SessionResponse] = get_sessions_for_machine()
+                #print(data)
                 self._open_session_view(data)
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao obter dados: {str(e)}")
@@ -130,7 +132,7 @@ class ComputerAccessTemplate:
 
     def _open_session_view(self, data):
         if not self.session_view:
-            self.session_view = SessionViewTemplate(self.COMPUTER_NAME, data, self)
+            self.session_view = SessionViewTemplate(machine_name=self.COMPUTER_NAME,session_responses=data,parent_window=self)
             self.root.withdraw()
 
     def _handle_window_close(self):

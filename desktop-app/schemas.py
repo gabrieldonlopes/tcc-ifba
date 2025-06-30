@@ -77,7 +77,8 @@ class PcInfo(BaseModel):
 class LabInfo(BaseModel):
     lab_name: str
     classes: List[str]
-
+    lab_id: str
+    
 class MachineConfig(BaseModel):
     machine_name: str
     motherboard: str
@@ -109,4 +110,5 @@ class LocalConfig(BaseModel):
     machine_key: str
     machine_name: str
     lab_name:str
+    lab_id: str
     classes:List[str]
