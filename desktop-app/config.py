@@ -12,12 +12,13 @@ from exceptions import MachineKeyAlreadyExists
 
 load_dotenv()
 
+# app_name = "InfoDomus"
+# config_path = os.path.join(os.getenv("LOCALAPPDATA"), app_name, "config.json")
+config_path = "./config.json" # opção apenas para testes
+
 WEB_API_KEY: Optional[str] = os.getenv("WEB_API_KEY")
 BASE_URL: Optional[str] = os.getenv("BASE_URL")
 
-#TODO: parametizar o config.json (config_path=CONFIG_JSON) para ele ser extraído do env
-#TODO: adicionar alguma forma de logging ou registro
-#TODO: post_config_from_ui está muito longo dividir em: post_new_config(),update_existing_config(),handle_key_conflict()
 
 def create_machine_key() -> str:
     """
@@ -31,25 +32,22 @@ def create_machine_key() -> str:
 
 def get_machine_key() -> Optional[str]:
     """Retrieves the machine key from config.json."""
-    if not os.path.isfile("config.json"):
+    if not os.path.isfile(config_path):
         return None
     try:
-        with open("config.json", "r", encoding='utf-8') as file:
+        with open(config_path, "r", encoding='utf-8') as file:
             config_data = json.load(file)
         return config_data.get("machine_key")
     except (json.JSONDecodeError, FileNotFoundError):
         return None
-
-#TODO: tirar os prints
+    
 def get_machine_config_from_api() -> Optional[MachineConfig]:
     """Retrieves machine configuration from the API."""
     machine_key = get_machine_key()
     if not machine_key:
-        #print("No machine key found. Cannot fetch machine config.")
         return None
 
     if not WEB_API_KEY or not BASE_URL:
-        #print("WEB_API_KEY or BASE_URL is not set in environment variables.")
         raise Exception(f"Dados inválidos: WEB_API_KEY e BASE_URL")
 
     headers = {
@@ -75,21 +73,18 @@ def get_machine_config_from_api() -> Optional[MachineConfig]:
 
 def get_local_config() -> Optional[LocalConfig]:
     """Reads local configuration from config.json."""
-    if not os.path.isfile("config.json"):
+    if not os.path.isfile(config_path):
         return None
     try:
-        with open("config.json", 'r', encoding='utf-8') as file:
+        with open(config_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             return LocalConfig(**data)
     except (json.JSONDecodeError, ValidationError, FileNotFoundError) as e:
-        #print(f"Error loading local config: {e}")
         return None
-
 
 def get_lab_info(lab_id: str) -> Optional[LabInfo]:
     """Retrieves laboratory information from the API."""
     if not WEB_API_KEY or not BASE_URL:
-        #print("WEB_API_KEY or BASE_URL is not set in environment variables.")
         raise Exception("Configuração crítica ausente: WEB_API_KEY e/ou BASE_URL não definidos.")
         
     headers = {
@@ -116,23 +111,23 @@ def get_lab_info(lab_id: str) -> Optional[LabInfo]:
     except Exception as e: # Catch any other unexpected errors
         raise Exception(f"Erro ao processar dados do laboratório: {e}")
 
-
-def write_local_info_to_json(local_config: LocalConfig, filename="config.json"):
+def write_local_info_to_json(local_config: LocalConfig, filename=config_path):
     """Writes the local configuration object to a JSON file."""
     if not hasattr(local_config, 'model_dump'):
         raise AttributeError("Objeto local_config inválido: método model_dump() não encontrado.")
 
     config_dict = local_config.model_dump()
     try:
+        # Garante que o diretório exista
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
         with open(filename, "w", encoding='utf-8') as f:
             json.dump(config_dict, f, indent=4)
-        #print(f"Configuração salva com sucesso no arquivo {filename}.")
-    except IOError as e: # More specific exception for file writing issues
+    except IOError as e:
         raise IOError(f"Erro de E/S ao salvar a configuração local no arquivo {filename}: {e}")
-        #print(f"Erro de I/O ao salvar a configuração local: {e}")
     except Exception as e:
         raise Exception(f"Erro inesperado ao salvar a configuração local no arquivo {filename}: {e}")
-        #print(f"Erro inesperado ao salvar a configuração local: {e}")
+
 
 def save_local_config(machine_key: str, machine_config_data: Union[NewMachineConfig, MachineConfig]):
     """Saves local configuration based on machine and lab info."""
