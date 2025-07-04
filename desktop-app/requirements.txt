@@ -23,4 +23,5 @@ tkcalendar==1.6.1
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 urllib3==2.5.0
+wmi==1.5.1
 yarl==1.20.1

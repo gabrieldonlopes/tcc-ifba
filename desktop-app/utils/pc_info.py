@@ -5,7 +5,6 @@ import psutil
 from datetime import datetime
 
 from schemas import PcInfo  # mantém seu modelo existente
-
 # Verificação de plataforma
 SYSTEM = platform.system()
 
@@ -64,26 +63,30 @@ def get_pc_info() -> PcInfo:
         cpu_temp=get_cpu_temp()
     )
 
-
 def get_machine_config() -> dict:
     """Retorna informações estáticas do sistema (armazenamento, RAM, placa-mãe)."""
     import math
     total, _, free = shutil.disk_usage(os.path.abspath("/"))
 
-    # Memória RAM total arredondada para cima (ceil)
     total_ram_gb = math.ceil(psutil.virtual_memory().total / (1024 ** 3))
-
-    # Armazenamento total arredondado para cima (ceil)
     total_storage_gb = math.ceil(total / (1024 ** 3))
 
-    # Informações da placa-mãe
-    manufacturer = model = None
-    if SYSTEM == "Windows" and w:
+    manufacturer = None
+    model = None
+
+    if SYSTEM == "Windows":
         try:
+            import wmi
+            w = wmi.WMI()
             for board in w.Win32_BaseBoard():
+                manufacturer = board.Manufacturer
                 model = board.Product
-        except Exception:
-            pass
+                break
+        except ImportError:
+            print("Modulo wmi nao esta instalado. Instale com 'pip install wmi'")
+        except Exception as e:
+            print(f"Erro ao obter info da placa-mãe: {e}")
+
     elif SYSTEM == "Linux":
         try:
             with open("/sys/devices/virtual/dmi/id/board_vendor") as f:
@@ -96,5 +99,5 @@ def get_machine_config() -> dict:
     return {
         "storage": f"{total_storage_gb}GB",
         "memory": f"{total_ram_gb}GB",
-        "motherboard": model,
+        "motherboard": f"{manufacturer} {model}" if manufacturer and model else None,
     }
