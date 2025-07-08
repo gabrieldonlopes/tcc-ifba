@@ -29,7 +29,7 @@ const Register = () => {
         <ToastContainer position="top-right" autoClose={3000} />
             <div className={`flex flex-col items-center justify-center min-h-screen ${pageBg}`}>
                 <div className={`w-full max-w-md p-8 rounded-lg shadow-2xl ${cardBg}`}>
-                    <h1 className="text-3xl font-bold text-center mb-6">
+                    <h1 className="text-3xl font-bold text-gray-300 text-center mb-6">
                         InfoDomus
                     </h1>
                     <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center gap-4 p-6 w-full max-w-md'>
