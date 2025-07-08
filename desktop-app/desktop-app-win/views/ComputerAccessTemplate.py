@@ -47,7 +47,7 @@ class ComputerAccessTemplate:
 
         self._create_widgets()
         self._setup_layout()
-        self._center_window(500, 420)
+        self._center_window(500, 420) # Altura ajustada para a remoção de um campo
 
         self.root.update_idletasks()
 

@@ -27,7 +27,6 @@ class ConfigMachineTemplate:
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.resizable(False, False)
         self._center_window(600, 500)
-        self.root.attributes('-topmost', True)
         
         self.loading_label = ctk.CTkLabel(
             self.root, 

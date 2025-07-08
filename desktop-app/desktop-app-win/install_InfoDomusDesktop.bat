@@ -108,7 +108,7 @@ echo.
 echo [INFO] Configurando inicializacao automatica...
 
 set "VENV_PYTHONW_EXE=!VENV_PATH!\Scripts\pythonw.exe"
-set "STARTUP_FOLDER=C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 set "SHORTCUT_PATH=!STARTUP_FOLDER!\PythonApp.lnk"
 
 powershell -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('!SHORTCUT_PATH!'); $s.TargetPath = '!VENV_PYTHONW_EXE!'; $s.Arguments = '\"!MAIN_SCRIPT_PATH!\"'; $s.WorkingDirectory = '!SCRIPT_DIR!'; $s.Save()"
