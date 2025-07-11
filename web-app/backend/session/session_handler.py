@@ -63,7 +63,6 @@ async def post_new_session(machine_key: str, session: SessionCreate, db: AsyncSe
 
     return {"message": "Sessão registrada com sucesso!"}
 
-
 async def get_sessions_for_lab(lab_id: str, db: AsyncSession) -> List[SessionResponse]:
     lab_result = await db.execute(
         select(Lab).where(Lab.lab_id == lab_id)
@@ -97,7 +96,6 @@ async def get_sessions_for_lab(lab_id: str, db: AsyncSession) -> List[SessionRes
         for s in sessions
     ]
 
-
 async def get_sessions_for_student(student_id: int, db: AsyncSession) -> List[SessionResponse]:
     student_result = await db.execute(
         select(Student).where(Student.student_id==student_id)
@@ -130,8 +128,6 @@ async def get_sessions_for_student(student_id: int, db: AsyncSession) -> List[Se
         )
         for s in sessions
     ]
-
-
 
 async def get_sessions_for_machine(machine_key: str, db: AsyncSession) -> List[SessionResponse]:
     # verifica a existência da máquina
