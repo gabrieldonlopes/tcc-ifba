@@ -18,12 +18,13 @@ from routers import (
 load_dotenv()
 WEB_API_KEY = os.getenv("WEB_API_KEY")
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 origins = [
     "http://backend:8080", # ip acessado pelo frontend
     "http://backend:8000", # ip acessado pelo frontend
 ]
+
 app.add_middleware( # serve para restringir o acesso da API
     CORSMiddleware,
     allow_origins=origins,
