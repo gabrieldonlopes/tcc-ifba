@@ -1,7 +1,7 @@
-# INFODOMUS — README
+# INFODOMUS
 ## Visão geral
 
-O INFODOMUS é um sistema composto por **três aplicações** principais: uma **aplicação desktop** (cliente para laboratórios), um **backend** (API REST em FastAPI) e um **frontend web** (SPA em React + Tailwind ). O objetivo do sistema é gerenciar sessões de uso de computadores em laboratórios, tarefas associadas, cadastro de estudantes e configuração de máquinas.
+O INFODOMUS é um sistema composto por **três aplicações** principais: uma **aplicação desktop** (cliente para laboratórios), um **backend** (API REST em FastAPI) e um **frontend web** (SPA em React + Tailwind CSS). O objetivo do sistema é gerenciar sessões de uso de computadores em laboratórios, tarefas associadas, cadastro de estudantes e configuração de máquinas.
 
 Este README descreve a finalidade de cada aplicação, as tecnologias utilizadas, instruções de instalação (desenvolvimento e produção), variáveis de ambiente relevantes, estrutura do repositório e recomendações operacionais.
 
@@ -76,12 +76,12 @@ Este README descreve a finalidade de cada aplicação, as tecnologias utilizadas
 ### Backend (API)
 ```bash
 cd web-app/backend
-python -m venv .venv # criar ambiente
-source .venv/bin/activate # ativar ambiente (Linux/Mac)
+python -m venv .venv 
+source .venv/bin/activate #(Linux/Mac)
 # .\.venv\Scripts\Activate.ps1  # Windows
-pip install -r requirements.txt # instalando dependências 
-python -m main --create-db # criando tabelas na db
-python -m main --run-server # rodando o servidor
+pip install -r requirements.txt
+python -m main --create-db 
+python -m main --run-server 
 ```
 
 ### Frontend (Web)
@@ -216,5 +216,4 @@ Principais variáveis (exemplos encontrados no pacote):
 
 Coloque cada variável em um `.env` local e **não** comite essas informações.
 
----
 
